@@ -10,26 +10,19 @@ out_dir = Path("downloads")
 out_dir.mkdir(exist_ok=True)
 
 versions = [
-    {"version": 100}, #damage, m1, and sprinting
-    {"version": 580}, #knockback and dashing
-    {"version": 675}, #UIS to IAS
-    {"version": 900}, #cubic hurtboxes and stun
-    {"version": 1650}, #cooldown, mouselock, and UniversalModules (space and time)
-    {"version": 1800},
-    {"version": 2000},
-    {"version": 2200},
-    {"version": 2400},
-    {"version": 2600},
-    {"version": 2800},
-    {"version": 3000},
-    {"version": 3500},
-    {"version": 3750},
-    {"version": 4000},
-    {"version": 4400},
-    {"version": 5000},
-    {"version": 5250},
-    {"version": 5500},
-    {"version": 6000},
+    {"version": 100, "message": "character selection, damage, m1, and sprinting"},
+    {"version": 580, "message": "knockback and dashing"},
+    {"version": 675, "message": "IAS (input action system)/energy"},
+    {"version": 900, "message": "cubic hurtboxes and stun"},
+    {"version": 1650, "message": "cooldown, mouselock, and UniversalModules (aka space and time)"},
+    {"version": 1875, "message": "CMS (character management system)/matter + removed UnmanagedManagers"},
+    {"version": 2200, "message": "first bare-style moveset finished (Redd) and movement anticheat"},
+    {"version": 2800, "message": "all bare-style movesets finished and animation handler"},
+    {"version": 3750, "message": "player data and map management"},
+    {"version": 4500, "message": "administration system and mobile support"},
+    {"version": 5000, "message": "weapon system"},
+    {"version": 5750, "message": "all weapon-style movesets finished"},
+    {"version": 6750, "message": ""},
 ]
 
 def download_version(version: int):

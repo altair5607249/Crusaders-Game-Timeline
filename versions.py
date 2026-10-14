@@ -1,3 +1,6 @@
+#this is for automating the curation of Crusaders's different versions, since scrolling through Roblox's version control is a laggy process
+#manually navigating through 7000 versions took me over an hour, so i will not be partaking in that again
+
 import os, requests
 
 key = os.environ["VERSION_HISTORY"]

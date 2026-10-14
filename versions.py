@@ -9,11 +9,11 @@ key = os.environ["VERSION_HISTORY"]
 out_dir = Path("downloads")
 out_dir.mkdir(exist_ok=True)
 
-versions = [ #not exact versions for now, since i havent figured them out yet
-    {"version": 1},
-    {"version": 500},
-    {"version": 1000},
-    {"version": 1400},
+versions = [
+    {"version": 100}, #damage, m1, and sprinting
+    {"version": 580}, #knockback and dashing
+    {"version": 675}, #UIS to IAS
+    {"version": 900}, #cubic hurtboxes and stun
     {"version": 1600},
     {"version": 1800},
     {"version": 2000},

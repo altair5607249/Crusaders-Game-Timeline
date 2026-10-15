@@ -3,6 +3,7 @@ local RS = game:GetService("ReplicatedStorage")
 local SSS = game:GetService("ServerScriptService")
 
 local toggle = RS.Remotes.ToggleStun
+local mouselock = RS.Remotes.Mouselock
 
 local spacing = require(RS.UniversalModules.Space)
 local timing = require(RS.UniversalModules.Time)
@@ -21,48 +22,45 @@ function stunManager.Eval(player: Player, atktype: string, duration: number, sou
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum: Humanoid = char:WaitForChild("Humanoid")
 	
-	if not player:GetAttribute("Stunned") or player:GetAttribute("Stunned") == 0 then
+	if not char:GetAttribute("Stunned") then
 		if char:HasTag("LoadingAttack") and atktype == "heavy" then char:AddTag("CancellingAttack") end
 		
-		player:SetAttribute("Stunned", true)
-		player:SetAttribute("StunTime", duration)
+		char:SetAttribute("Stunned", true)
+		char:SetAttribute("StunTime", duration)
 
 		local hum: Humanoid = char:FindFirstChild("Humanoid")
 		hum.WalkSpeed = 0
-		hum.JumpPower = 0
 	else
-		duration += player:GetAttribute("StunTime")
-		player:SetAttribute("StunTime", duration)
+		if char:GetAttribute("StunTime") > 4 then return end --stun time is capped :)
+		duration += char:GetAttribute("StunTime")
+		char:SetAttribute("StunTime", duration)
 	end
 	
-	if player:GetAttribute("StunType") then player:SetAttribute("StunType", atktype) end --stores the most recent valid atktype
+	if atktype then char:SetAttribute("StunType", atktype) end --stores the most recent valid atktype
 	
-	local previousSource = player:GetAttribute("StunSource")
-	if not previousSource or stunPriority[source] > stunPriority[previousSource] then player:SetAttribute("StunSource", source) end
+	local previousSource = char:GetAttribute("StunSource")
+	if not previousSource or stunPriority[source] > stunPriority[previousSource] then char:SetAttribute("StunSource", source) end
 	
-	if not player:GetAttribute("StunExt") then
+	if not char:GetAttribute("StunExt") then
 		if atktype then toggle:FireClient(player, atktype, true) end
 		
 		local initialStun = os.clock()
 		task.spawn(function()
-			player:SetAttribute("StunExt", true)
+			char:SetAttribute("StunExt", true)
 			
-			if not char:HasTag("Dashing") then hum.AutoRotate = false end
-			
-			repeat task.wait() until (os.clock() - initialStun >= player:GetAttribute("StunTime")) or player.Parent ~= Players --repeats until change in time outweighs the duration
+			repeat task.wait() until (os.clock() - initialStun >= char:GetAttribute("StunTime")) or player.Parent ~= Players or not hum
 			
 			if player.Parent ~= Players then return end
 			
-			if player:GetAttribute("StunType") then toggle:FireClient(player, player:GetAttribute("StunType"), false) end
+			if char:GetAttribute("StunType") then toggle:FireClient(player, char:GetAttribute("StunType"), false) end
 			
-			player:SetAttribute("Stunned", false)
-			player:SetAttribute("StunTime", 0)
-			player:SetAttribute("StunExt", false)
-			player:SetAttribute("StunSource", nil)
+			char:SetAttribute("Stunned", false)
+			char:SetAttribute("StunTime", nil)
+			char:SetAttribute("StunExt", nil)
+			char:SetAttribute("StunSource", nil)
+			char:SetAttribute("StunType", nil)
 
 			hum.WalkSpeed = spacing.GetValue(crusader, 1)
-			hum.JumpPower = spacing.GetValue(crusader, 3)
-			hum.AutoRotate = true
 		end)
 	end
 end

@@ -6,7 +6,6 @@ local IAS = require(player.PlayerScripts.Energy)
 local timing = require(RS.UniversalModules.Time)
 
 local animHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.AnimationHandler)
-local stunHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.StunHandler)
 
 local context = RS.InputContexts.BareContext
 local switch = false
@@ -40,7 +39,8 @@ function bareStyle.Input(move: number)
 	if hum == nil or hum.Health <= 0 then return end
 	
 	local constraint = timing.GetValue(crusader, "Bare", 2, move)
-	if timing.CheckConstraint(bareRegistry[move], constraint) or stunHandler:GetStunState() then return end
+	
+	if timing.CheckConstraint(bareRegistry[move], constraint) or char:GetAttribute("Stunned") then return end
 	
 	local delayTime = timing.GetValue(crusader, "Bare", 1, move)
 	local animTrack = animTracks[move]
@@ -55,10 +55,17 @@ function bareStyle.Input(move: number)
 	
 	local fullAnim = timing.GetValue(crusader, "Bare", 3, move)
 	local continuation: boolean = timing.GetValue(crusader, "Bare", 5, move)
+	
 	if continuation then
-		task.delay(fullAnim, function()
-			print("Animation ending!")
-			if not char:HasTag("Continue") then animTrack:Stop() end
+		task.spawn(function()
+			repeat task.wait() until char:HasTag("Continue") or char:HasTag("Discontinue")
+			if char:HasTag("Discontinue") then animTrack:Stop() end
+		end)
+	elseif continuation == nil then
+		local initialTime = os.clock()
+		task.spawn(function()
+			repeat task.wait() until char:HasTag("HitFinished") or os.clock() - initialTime >= fullAnim
+			animTrack:Stop()
 		end)
 	end
 end

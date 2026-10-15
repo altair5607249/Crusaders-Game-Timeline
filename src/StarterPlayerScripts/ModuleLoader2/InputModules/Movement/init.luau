@@ -2,8 +2,6 @@ local player = game:GetService("Players").LocalPlayer
 local RS = game:GetService("ReplicatedStorage")
 local RNS = game:GetService("RunService")
 
-local stunHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.StunHandler)
-
 local IAS = require(player.PlayerScripts.Energy)
 local spacing = require(RS.UniversalModules.Space)
 local timing = require(RS.UniversalModules.Time)
@@ -18,8 +16,11 @@ local animations = script:WaitForChild("Animations")
 local animsTable = animations:GetChildren()
 local animDispatch = {}
 
-local crusader, char, root, baseSpd, runSpd, hum, animator
+local crusader, char, root, baseSpd, runSpd, hum: Humanoid?, animator
 local dashRegistry, frontDash
+
+local sprintConnection: RBXScriptConnection? = nil --moved to module scope so it persists across Sprint() calls
+local activeDashLoop: RBXScriptConnection? = nil --prevents overlapping dash loops from fighting over velocity
 
 local function onCharacterChanged()
 	crusader = player:GetAttribute("Crusader")
@@ -29,7 +30,7 @@ local function onCharacterChanged()
 	runSpd = spacing.GetValue(crusader, 2)
 	hum = char:WaitForChild("Humanoid")
 	animator = hum:WaitForChild("Animator")
-	
+
 	dashRegistry ={
 		FrontDash = 0,
 		AuxDash = 0
@@ -42,6 +43,7 @@ local function onCharacterChanged()
 	end
 end
 
+if player.Character then onCharacterChanged() end --covers the case where Character already exists before this script runs
 player.CharacterAdded:Connect(function()
 	onCharacterChanged() --callback in case of respawn and/or character swap
 end)
@@ -58,28 +60,40 @@ local dashSpecs = {
 function movement.Dash(dashDur: number, direction: Vector3, anim: Animation)
 	local name = dashSpecs[anim.Name][1]
 	local constraint = timing.GetValue(crusader, "Tech", 2, dashSpecs[anim.Name][2])
-	if timing.CheckConstraint(dashRegistry[name], constraint) or stunHandler:GetStunState() then return end
-		
+	local stamina: number = hum:GetAttribute("Stamina")
+
+	if timing.CheckConstraint(dashRegistry[name], constraint) or char:GetAttribute("Stunned") then return end
+	if stamina <= 0 then return end --no stamina, no dice
+
+	--actual stamina checks
+	if direction == root.CFrame.LookVector then --for front dashes
+		if stamina < 5 then return end
+	else --for auxiliary dashes
+		if stamina < 2.5 then return end
+	end
+
 	RS.Remotes.MovementTrigger:FireServer("dashSpecs", anim.Name)
 	dashRegistry[name] = os.clock()
-		
+
 	if direction == root.CFrame.LookVector then frontDash = true end
-		
+
 	animDispatch[anim]:Play()
-		
+
 	local x, d = 0, 95 --x should probably start at 0, but modify incase diff starting point desired
 	local b = math.sqrt(d)/dashDur
-			
-	local loop = nil
-	loop = RNS.RenderStepped:Connect(function(dt)
+
+	if activeDashLoop then activeDashLoop:Disconnect() end --cancel any in-flight dash before starting a new one
+
+	activeDashLoop = RNS.RenderStepped:Connect(function(dt)
 		if frontDash == true then direction = root.CFrame.LookVector end
-			
+
 		local magnitude = -(b*x)^2 + d --so proud of this equation's evolution
 		root.AssemblyLinearVelocity = direction * magnitude
-			
+
 		x += dt
 		if x >= dashDur then
-			loop:Disconnect()
+			activeDashLoop:Disconnect()
+			activeDashLoop = nil
 			if frontDash == true then frontDash = false end
 		end
 	end)
@@ -87,12 +101,23 @@ end
 
 function movement.Sprint(sprinting: boolean)
 	RS.Remotes.MovementTrigger:FireServer("runSpecs", "Sprint", sprinting)
-	if sprinting then
+
+	if sprinting and hum:GetAttribute("Stamina") > 0 then
 		fovUp:Play()
 		hum.WalkSpeed = runSpd
+
+		if sprintConnection then sprintConnection:Disconnect() end --clear any stale connection first
+		sprintConnection = hum:GetAttributeChangedSignal("Stamina"):Connect(function()
+			if hum:GetAttribute("Stamina") <= 0 then movement.Sprint(false) end
+		end)
 	else
 		hum.WalkSpeed = baseSpd
 		fovDown:Play()
+
+		if sprintConnection then
+			sprintConnection:Disconnect()
+			sprintConnection = nil
+		end
 	end
 end
 

@@ -1,0 +1,9 @@
+{
+  "properties": {
+    "Sandboxed": true,
+    "Capabilities": {
+      "SecurityCapabilities": 17996771963439872
+    },
+    "SourceAssetId": 6249013068.0
+  }
+}

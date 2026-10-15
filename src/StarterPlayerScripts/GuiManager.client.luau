@@ -1,5 +1,4 @@
 --camera manipulation math provided by 70rnk
-
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")

@@ -20,10 +20,10 @@ for i, character in ipairs(charModules) do
 end
 
 local namespace = {
-	Redd = "RM",
-	Yello = "YM",
-	Gleen = "GM",
-	Bluee = "BM"
+	Redd = {"Headbutt", "Hero's Fist", "Sacred Circle", "Sixth Sense"},
+	Yello = {"Beam", "Invisible Attack", "Fulmination", "Rift Rush"},
+	Gleen = {"Suplex", "Animal Instinct", "Give Gifts", "Breach"},
+	Bluee = {"Rend", "Copy", "Vortex", "Gamble"}
 }
 
 local bareManager = {}
@@ -41,21 +41,22 @@ function bareManager.Action(player: Player, move: number, copiedCrusader: string
 		copycat = true
 	end
 	
-	local moveName = namespace[crusader] .. tostring(move)
+	local moveName = namespace[crusader][move]
 	
-	if player:GetAttribute("Stunned") then --first stun check
-		if not copycat or player:GetAttribute("StunSource") ~= "Recovery" then
+	if char:GetAttribute("Stunned") then --first stun check
+		if not copycat or char:GetAttribute("StunSource") ~= "Recovery" then
 			return
 		end
 	end
 	
 	if not copycat then
 		if not cooldown:IsReady(player, moveName, "Bare") then return end
-		cooldown:Register(player, moveName, move)
+		cooldown:Register(player, moveName, "Bare", move)
 	end
 		
 	local delayTime = timing.GetValue(crusader, "Bare", 1, move)
 	local duration = timing.GetValue(crusader, "Bare", 3, move) - delayTime
+	local earlyEnd = timing.GetValue(crusader, "Bare", 5, move) --no recovery frames/anim commitment
 	
 	char:AddTag("LoadingAttack")
 	task.delay(delayTime, function()
@@ -64,7 +65,7 @@ function bareManager.Action(player: Player, move: number, copiedCrusader: string
 			char:RemoveTag("CancellingAttack")
 			return
 		end
-		stunManager.Eval(player, nil, duration, "Recovery") --recovery frames/anim commitment
+		if earlyEnd ~= nil then stunManager.Eval(player, nil, duration, "Recovery") end --recovery frames/anim commitment
 		characters[crusader][move]:Trigger(player)
 	end)
 end

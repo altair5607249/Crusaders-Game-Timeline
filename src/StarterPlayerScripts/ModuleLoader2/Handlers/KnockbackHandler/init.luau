@@ -26,13 +26,14 @@ end)
 local animSpecs = {
 	light = 1,
 	medium = 2,
-	heavy = 3
+	heavy = 3,
+	reverse = 4 --give this a custom animation post-MVP
 }
 
 local function toggleCharacterModel(character: Model, property: string, modifier: any)
 	for i, object in ipairs(character:GetDescendants()) do
-		if object.Name == "HumanoidRootPart" then continue end
-		if object:IsA("Part") or object:IsA("Decal") or object:IsA("MeshPart") then
+		if object.Name == "HumanoidRootPart" or object.Name == "Handle" or object.Name == "hitPart" then continue end
+		if object:IsA("BasePart") or object:IsA("Decal") then
 			local hasProperty, _ = pcall(function() local test = object[property] end)
 			if hasProperty and not object:FindFirstChild(property) then 
 				object[property] = modifier 
@@ -51,7 +52,7 @@ function knockbackHandler.Casing(atktype: string, momentum: Vector3, targetRoot:
 end
 
 function knockbackHandler:Affect(momentum: Vector3, targetRoot: Part)
-	if targetRoot then
+	if targetRoot then --this physics illusion method was inspired by TSB :)
 		local targetChar = targetRoot.Parent
 		
 		targetChar.Archivable = true
@@ -67,13 +68,21 @@ function knockbackHandler:Affect(momentum: Vector3, targetRoot: Part)
 		toggleCharacterModel(targetChar, "Transparency", 1) --hides the real enemy model
 		
 		local cloneRoot: Part = targetClone:WaitForChild("HumanoidRootPart")
-		targetRoot:ApplyImpulse(momentum)
 		cloneRoot:ApplyImpulse(momentum)
 		
+		local loop
+		loop = RNS.RenderStepped:Connect(function()
+			if targetRoot and cloneRoot and targetChar:HasTag("RagdollActive") then
+				targetRoot.CFrame = targetRoot.CFrame:Lerp(cloneRoot.CFrame, 0.7)
+			else
+				loop:Disconnect()
+			end
+		end)
+		
 		task.spawn(function()
-			local elapsed = 0
-			local initialTime = os.clock()
 			repeat task.wait() until not targetChar:HasTag("RagdollActive")
+			
+			if loop then loop:Disconnect() end
 			
 			targetClone:Destroy()
 			toggleCharacterModel(targetChar, "Transparency", 0) --brings back the real enemy model

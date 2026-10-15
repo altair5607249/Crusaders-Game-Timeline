@@ -7,7 +7,6 @@ local spacing = require(RS.UniversalModules.Space)
 local timing = require(RS.UniversalModules.Time)
 
 local animHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.AnimationHandler)
-local stunHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.StunHandler)
 
 local attack = RS.Remotes.Attack
 
@@ -20,6 +19,7 @@ local function onCharacterChanged()
 	prevInput, count, comboExtension, db = 0, 0, 1, false
 	char = player.Character or player.CharacterAdded:Wait()
 	hum = char:WaitForChild("Humanoid")
+	root = char:WaitForChild("HumanoidRootPart")
 	animator = hum:WaitForChild("Animator")
 
 	animTracks = animHandler:LoadAnimations(animator, animations, crusader, "M1")
@@ -40,7 +40,7 @@ local m1 = {}
 function m1.Click()
 	if not db then
 		if hum == nil or hum.Health <= 0 then return end
-		if stunHandler:GetStunState() then return end
+		if char:GetAttribute("Stunned") then return end
 
 		db = true
 
@@ -60,6 +60,8 @@ function m1:Attack(index: number)
 		index = options[choice]
 		table.remove(options, choice)
 	end
+	
+	root.AssemblyLinearVelocity = root.CFrame.LookVector * 45
 
 	local animTrack = animTracks[index]
 	animTrack:Play()

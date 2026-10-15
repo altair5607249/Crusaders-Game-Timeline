@@ -102,9 +102,12 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 				
 				targetHum:TakeDamage(attributes["dmg"]) --most important line obviously
 				
-				if attributes["oneHit"] then
+				if attributes["oneHit"] and targetPlr then
 					duration = attributes["atkdur"]
 					char:AddTag("HitFinished")
+					task.delay(0.1, function()
+						char:RemoveTag("HitFinished")
+					end)
 				end
 				
 				if attributes["DOT"] then 
@@ -114,10 +117,17 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 					end)
 				end
 				
-				if not targetHum or targetHum.Health <= 0 then continue end
+				if not targetHum or targetHum.Health <= 0 then 
+					if targetPlr then --adds a KO if it's a player
+						player.leaderstats["KO's"].Value += 1
+					end
+					
+					continue 
+				end
+				
 				if targetChar:HasTag("Resistance") then continue end --available during rush-style and ult attacks
 				
-				if not attributes["precedent"] then
+				if attributes["precedent"] ~= true then
 					if not attributes["shockwave"] then 
 						stun:DurReg(player, targetPlr, attributes["atktype"], attributes["style"], attributes["ID"], "Hit") --hitstun 
 					end

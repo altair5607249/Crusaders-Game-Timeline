@@ -7,16 +7,23 @@ local knockbackManager = {}
 function knockbackManager.Eval(player: Player, targetPlr: Player, targetRoot: Part, attributes: {Instance})
 	knockback:FireClient(player, attributes, targetRoot)
 	if targetPlr then toggleAnim:FireClient(targetPlr, attributes) end
+	if targetPlr then targetPlr:AddTag("RagdollActive") end
 	
-	--[[local frames = 0
-	repeat 
-		task.wait() 
-		frames += 1
-
-		if not (targetRoot and targetRoot.Parent) then break end
-		if frames > 90 then break end
-		
-	until Vector3.new(targetRoot.AssemblyLinearVelocity.X, 0, targetRoot.AssemblyLinearVelocity.Z).Magnitude < 2 and frames > 10]]
+	local frames = 0
+	
+	task.spawn(function()
+		repeat 
+			task.wait() 
+			frames += 1
+			if not (targetRoot and targetRoot.Parent) then break end
+			if frames > 90 then break end
+		until Vector3.new(targetRoot.AssemblyLinearVelocity.X, 0, targetRoot.AssemblyLinearVelocity.Z).Magnitude < 18 and frames > 10
+	end)
+	
+	if targetPlr then 
+		targetRoot:RemoveTag("RagdollActive")
+		targetPlr:SetAttribute("lastServerPos", targetRoot.Position)
+	end
 end
 
 return knockbackManager

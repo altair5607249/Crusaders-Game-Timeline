@@ -25,7 +25,7 @@ local Camera = workspace.CurrentCamera
 local CamPart = RS:FindFirstChild("camPart"):Clone()
 
 CamPart.Parent = workspace
-CamPart.Position = workspace:FindFirstChild("introPart").Position
+CamPart.Position = workspace:WaitForChild("introPart").Position
 Camera.CameraSubject = CamPart
 Camera.CameraType = Enum.CameraType.Scriptable
 

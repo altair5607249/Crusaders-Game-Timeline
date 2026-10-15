@@ -7,7 +7,6 @@ local managers = script.Parent.Parent.Managers
 local cooldown = require(managers.CooldownManager)
 local damager = require(managers.DamageManager)
 
-local CMS = require(SSS.ModuleLoader.Matter)
 local spacing = require(RS.UniversalModules.Space)
 local timing = require(RS.UniversalModules.Time)
 
@@ -31,7 +30,7 @@ function m1Manager.Action(player: Player, index: number)
 	local comboExtension, cheating = 1, false
 	
 	if index > 4 then return end --just incase a modified client tries to pass their strike index as 4 when it isnt actually 4
-	if not cooldown:IsReady(player, "M1", "M1") or CMS:GetAttribute(player, "Stunned") then return end
+	if not cooldown:IsReady(player, "M1", "M1") or player:GetAttribute("Stunned") then return end
 	
 	local count = timing.M1Timing(m1Registry[player].prevCount, m1Registry[player].prevTick, comboExtension)
 	
@@ -48,7 +47,7 @@ function m1Manager.Action(player: Player, index: number)
 	m1Registry[player].prevTick = tick()
 	cooldown:Register(player, "M1", index)
 	
-	local crusader = CMS:GetAttribute(player, "Crusader")
+	local crusader = player:GetAttribute("Crusader")
 		
 	local delayTime = timing.GetValue(crusader, "M1", 1, index)
 	local dmg = spacing.GetValue(crusader, 4)
@@ -68,7 +67,7 @@ function m1Manager.Action(player: Player, index: number)
 	}
 	
 	task.delay(delayTime, function()
-		if CMS:GetAttribute(player, "Stunned") then return end
+		if player:GetAttribute("Stunned") then return end
 		damager:Damage(player, attackData)	
 		--maybe add a lil' extra delay here for insurance on the commitment
 		hum.WalkSpeed, hum.JumpPower = speed, jump

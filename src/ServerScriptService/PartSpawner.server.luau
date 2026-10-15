@@ -1,10 +1,11 @@
 local RS = game:GetService("ReplicatedStorage")
+local RNS = game:GetService("RunService")
 local Players = game:GetService("Players")
 
 local hitPart = RS.hitPart
 
-Players.PlayerAdded:Connect(function(plr)
-	plr.CharacterAdded:Connect(function(char)
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function(char)
 		local hum = char:WaitForChild("Humanoid")
 		local root = char:WaitForChild("HumanoidRootPart")
 		

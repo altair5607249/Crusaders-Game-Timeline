@@ -5,11 +5,18 @@ local damager = require(managers.DamageManager)
 local RM2 = {}
 
 function RM2:Trigger(player: Player)
-	print("RM2")
+	print("rm2")
+	
+	print(player:HasTag("CancellingMove"))
+	
+	if player:HasTag("CancellingMove") then 
+		print("detected")
+		player:RemoveTag("CancellingMove") 
+		return 
+	end
 	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum = char:WaitForChild("Humanoid")
-	local root = char:WaitForChild("HumanoidRootPart")
 	
 	local dmg = 25
 	local shockwaveDmg = 10

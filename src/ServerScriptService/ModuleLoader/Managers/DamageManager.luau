@@ -21,7 +21,7 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 	
 	local root = char:WaitForChild("HumanoidRootPart")
 	local hum = char:WaitForChild("Humanoid")
-	local origin = char:WaitForChild("hitPart")
+	local origin = attributes["origin"] or char:WaitForChild("hitPart", 2)
 
 	if hum == nil or hum.Health <= 0 then return end
 
@@ -51,15 +51,28 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 	local loop
 	local duration = 0
 	loop = RNS.Heartbeat:Connect(function(dt)
+		if hum == nil or hum.Health <= 0 then --early end
+			loop:Disconnect()
+			table.clear(targets)
+			if attributes["shockwave"] then origin:Destroy() end
+			return
+		end
+		
+		if attributes["expanding"] then attributes["atkrad"] *= attributes["expanding"]^dt end
+		
 		center = origin.CFrame
 		local hits = workspace:GetPartBoundsInBox(center, Vector3.new(attributes["atkrad"], attributes["atkrad"], attributes["atkrad"]), params)
 		for i, part in hits do
 			local targetChar = part:FindFirstAncestorOfClass("Model")
-			local targetPlr = Players:GetPlayerFromCharacter(targetChar)
-			local targetHum = targetChar:FindFirstChild("Humanoid")
-			local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
+			if not targetChar then continue end
 			
-			if not targetHum or targetHum == hum then continue end
+			local targetPlr = Players:GetPlayerFromCharacter(targetChar)
+			local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
+			if not targetRoot then continue end
+			
+			local targetHum = targetChar:FindFirstChild("Humanoid")
+			if not targetHum or targetHum.Health <= 0 or targetHum == hum then continue end
+			
 			if targetHum:GetAttribute("Immortal") then continue end
 			
 			if attributes["shockwave"] ~= nil then
@@ -70,14 +83,25 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 			end
 
 			if not table.find(targets, targetHum) then
-				table.insert(targets, targetHum)
+				if not attributes["DOT"] then table.insert(targets, targetHum) end --for damage-over-time attacks
 				
 				targetHum:TakeDamage(attributes["dmg"]) --most important line obviously
+				print("Damage frame!")
+				
+				if attributes["DOT"] then 
+					targetHum:SetAttribute("Immortal", true) --i-frames for DOT; we're not adding Sans-level mechanics here
+					task.delay(attributes["DOT"], function()
+						targetHum:SetAttribute("Immortal", nil)
+					end)
+				end
 				
 				if targetHum == nil or targetHum.Health <= 0 then continue end
+				if targetChar:HasTag("Resistance") then continue end --available during rush-style and ult attacks
 				
-				if attributes["shockwave"] == nil then stun:DurReg(targetPlr, attributes["atktype"], attributes["style"], attributes["ID"]) end --hitstun
-				kb.Eval(player, targetPlr, targetRoot, attributes) --knockback
+				if attributes["shockwave"] == nil then stun:DurReg(targetPlr, attributes["atktype"], attributes["style"], attributes["ID"], "Hit") end --hitstun
+				if not attributes["expanding"] then 
+					kb.Eval(player, targetPlr, targetRoot, attributes) 
+				end --knockback
 			end
 		end
 

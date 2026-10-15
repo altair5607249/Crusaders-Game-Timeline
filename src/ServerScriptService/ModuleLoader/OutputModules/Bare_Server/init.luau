@@ -4,12 +4,10 @@ local SSS = game:GetService("ServerScriptService")
 local managers = script.Parent.Parent.Managers
 
 local cooldown = require(managers.CooldownManager)
-local stun = require(managers.StunManager)
+local stunManager = require(managers.StunManager)
 
-local CMS = require(SSS.ModuleLoader.Matter)
 local timing = require(RS.UniversalModules.Time)
 
-local stunManager = require(script.Parent.Parent.Managers.StunManager)
 local charModules = script.CharModules:GetChildren()
 local characters = {}
 
@@ -21,22 +19,49 @@ for i, character in ipairs(charModules) do
 	end
 end
 
+local namespace = {
+	Redd = "RM",
+	Yello = "YM",
+	Gleen = "GM",
+	Bluee = "BM"
+}
+
 local bareManager = {}
 
-function bareManager.Action(player: Player, move: number)
-	local moveName = "BM" .. tostring(move)
+function bareManager.Action(player: Player, move: number, copiedCrusader: string)
+	local crusader = player:GetAttribute("Crusader")
+	local copycat = false
 	
-	if not cooldown:IsReady(player, moveName, "Bare") or CMS:GetAttribute(player, "Stunned") then return end
-	cooldown:Register(player, moveName, move)
+	if copiedCrusader then
+		crusader = copiedCrusader
+		copycat = true
+	end
 	
-	local char  = player.Character or player.CharacterAdded:Wait()
-	local crusader = CMS:GetAttribute(player, "Crusader")
+	local moveName = namespace[crusader] .. tostring(move)
+	
+	if player:GetAttribute("Stunned") then --first stun check
+		if not copycat or player:GetAttribute("StunSource") ~= "Recovery" then
+			return
+		end
+	end
+	
+	if not copycat then
+		if not cooldown:IsReady(player, moveName, "Bare") then return end
+		cooldown:Register(player, moveName, move)
+	end
+	
+	print("Server-side confirmation")
 		
 	local delayTime = timing.GetValue(crusader, "Bare", 1, move)
 	local duration = timing.GetValue(crusader, "Bare", 3, move)
-		
+	
+	player:AddTag("LoadingAttack")
+	print(player:HasTag("CancellingMove"))
 	task.delay(delayTime, function()
-		stunManager.Eval(player, nil, duration) --recovery frames/anim commitment
+		print(player:HasTag("CancellingMove"))
+		player:RemoveTag("LoadingAttack")
+		print(player:HasTag("CancellingMove"))
+		stunManager.Eval(player, nil, duration, "Recovery") --recovery frames/anim commitment
 		characters[crusader][move]:Trigger(player)
 	end)
 end

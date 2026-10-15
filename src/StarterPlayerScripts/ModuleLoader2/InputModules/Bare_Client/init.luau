@@ -5,50 +5,44 @@ local attack = RS.Remotes.Attack
 local IAS = require(player.PlayerScripts.Energy)
 local timing = require(RS.UniversalModules.Time)
 
-local crusader
-RS.Remotes.ReturnAttribute.OnClientEvent:Connect(function(name: string)
-	crusader = name
-end)
+local animHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.AnimationHandler)
+local stunHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.StunHandler)
 
 local context = RS.InputContexts.BareContext
 local switch = false
 
-local char, hum, animator 
+local crusader, bareRegistry, char, hum, animator, animTracks
 local animations = script.Animations
-local animTracks = {}
 
 local function onCharacterChanged()
+	crusader = player:GetAttribute("Crusader")
+	bareRegistry = {0, 0, 0, 0}
+	animHandler:ClearCache()
 	char = player.Character or player.CharacterAdded:Wait()
 	hum = char:WaitForChild("Humanoid")
 	animator = hum:WaitForChild("Animator")
 	
-	local charAnims = animations[crusader]:GetChildren()
-	
-	table.sort(charAnims, function(a, b)
-		return a:GetAttribute("Order") < b:GetAttribute("Order")
-	end)
-	
-	for i, anim in ipairs(charAnims) do
-		local animTrack = animator:LoadAnimation(anim)
-		table.insert(animTracks, animTrack)
-	end
+	animTracks = animHandler:LoadAnimations(animator, animations, crusader, "Bare")
 end
 
-player:GetPropertyChangedSignal("Character"):Connect(function()
-	table.clear(animTracks)
-	repeat task.wait() until crusader ~= nil
+player.CharacterAdded:Connect(function()
 	onCharacterChanged()
 end)
 
-local bareRegistry = {0, 0, 0, 0}
+RS.Remotes.CopyAnimation.OnClientEvent:Connect(function(copiedCrusader: string, copiedMove: number)
+	local copiedAnimTracks = animHandler:LoadAnimations(animator, animations, copiedCrusader, "Bare")
+	copiedAnimTracks[copiedMove]:Play()
+end)
 
 local bareStyle = {}
 
 function bareStyle.Input(move: number)
-	local constraint = timing.GetValue(crusader, "Bare", 2, move)
-	if timing.CheckConstraint(bareRegistry[move], constraint) then return end
+	if hum == nil or hum.Health <= 0 then return end
 	
-	print("Client reaction")
+	local constraint = timing.GetValue(crusader, "Bare", 2, move)
+	if timing.CheckConstraint(bareRegistry[move], constraint) or stunHandler:GetStunState() then return end
+	
+	print("Client-side confirmation")
 	local animTrack = animTracks[move]
 	animTrack:Play()
 	attack:FireServer("Bare_Server", move)

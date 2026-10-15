@@ -6,60 +6,46 @@ local IAS = require(player.PlayerScripts.Energy)
 local spacing = require(RS.UniversalModules.Space)
 local timing = require(RS.UniversalModules.Time)
 
-local crusader
-RS.Remotes.ReturnAttribute.OnClientEvent:Connect(function(name: string)
-	print("Signal received")
-	crusader = name
-end)
+local animHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.AnimationHandler)
+local stunHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.StunHandler)
 
 local attack = RS.Remotes.Attack
 
-local options, prevInput, count, comboExtension, db, char, hum, animator
+local crusader, options, prevInput, count, comboExtension, db, char, hum, animator, animTracks
 local animations = script.Animations
-local animTracks = {}
 
 local function onCharacterChanged()
-	print("Yay")
+	crusader = player:GetAttribute("Crusader")
 	options = {1, 2, 3}
 	prevInput, count, comboExtension, db = 0, 0, 1, false
 	char = player.Character or player.CharacterAdded:Wait()
 	hum = char:WaitForChild("Humanoid")
 	animator = hum:WaitForChild("Animator")
 
-	local charAnims = animations[crusader]:GetChildren()
-
-	table.sort(charAnims, function(a, b)
-		return a:GetAttribute("Order") < b:GetAttribute("Order")
-	end)
-
-	for i, anim in ipairs(charAnims) do
-		local animTrack = animator:LoadAnimation(anim)
-		table.insert(animTracks, animTrack)
-	end
+	animTracks = animHandler:LoadAnimations(animator, animations, crusader, "M1")
 end
 
---[[player:GetPropertyChangedSignal("Character"):Connect(function()
+player.CharacterAdded:Connect(function()
+	onCharacterChanged()
+end)
+
+--[[player.CharacterAdded:Connect(function()
 	table.clear(animTracks)
 	repeat task.wait() until crusader ~= nil
 	onCharacterChanged()
 end)]]
-
-player.CharacterAdded:Connect(function()
-	table.clear(animTracks)
-	repeat task.wait() until crusader ~= nil
-	onCharacterChanged()
-end)
 
 local m1 = {}
 
 function m1.Click()
 	if not db then
 		if hum == nil or hum.Health <= 0 then return end
-		
+		if stunHandler:GetStunState() then return end
+
 		db = true
-		
+
 		count = timing.M1Timing(count, prevInput, comboExtension)
-		
+
 		local index = count
 		m1:Attack(index)
 		prevInput = tick()
@@ -74,14 +60,15 @@ function m1:Attack(index: number)
 		index = options[choice]
 		table.remove(options, choice)
 	end
-	
+
 	local animTrack = animTracks[index]
 	animTrack:Play()
 	attack:FireServer("M1_Server", index)
-	
+
+	local currentChar = char
 	local cooldown = timing.GetValue(crusader, "M1", 2, index)
 	task.delay(cooldown, function()
-		db = false
+		if currentChar == char then db = false end
 	end)
 end
 

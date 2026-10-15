@@ -1,26 +1,37 @@
---basis provided by 70rnk
+--camera manipulation math provided by 70rnk
 
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local hum = char:FindFirstChild("Humanoid")
-local Camera = workspace.CurrentCamera
+local RS = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local RS = game:GetService("ReplicatedStorage")
-local remotes = RS:WaitForChild("Remotes")
-local trans = remotes:WaitForChild("TransitionServer")
-local load = remotes:WaitForChild("LoadingClient")
-local humChange = remotes:WaitForChild("HumChange")
+local player = Players.LocalPlayer
+local PG = player:WaitForChild("PlayerGui")
+local loadingManager = require(PG:WaitForChild("LoadingScreen").ModuleLoader3.Manager)
 
+local hum = nil
+local function onCharacterAdded(char: Model)
+	hum = char:WaitForChild("Humanoid")
+end
+
+if player.Character then --in case the character model already exists (race condition for initial player entry)
+	onCharacterAdded(player.Character)
+end
+
+player.CharacterAdded:Connect(function(char) --in case the character model doesn't already exist
+	onCharacterAdded(char)
+end)
+
+local Camera = workspace.CurrentCamera
 local CamPart = RS:FindFirstChild("camPart"):Clone()
-
-task.wait(3)
 
 CamPart.Parent = workspace
 CamPart.Position = workspace:FindFirstChild("introPart").Position
 Camera.CameraSubject = CamPart
 Camera.CameraType = Enum.CameraType.Scriptable
+
+repeat task.wait() until hum ~= nil
+
+loadingManager.StartScreen() 
 
 local moveFactor = 0.0005
 local previousMouseX, previousMouseY = nil, nil
@@ -35,25 +46,14 @@ local moving = false
 --button scripts
 local PlayButton = UI:FindFirstChild("PlayPart").SurfaceGui.TextButton
 local CreditsButton = UI:FindFirstChild("CreditsPart").SurfaceGui.TextButton
-local db = true
-local db2 = true
-
-load.OnClientEvent:Connect(function()
-	db = false
-	db2 = false
-end)
+local db, db2 = false, false
 
 --start/play
 PlayButton.Activated:Connect(function()
 	if not db then
 		db = true
 		db2 = true
-		trans:FireServer()
-		task.wait(2.25)
-		humChange.OnClientEvent:Connect(function(humanoid)
-			hum = humanoid
-		end)
-		task.wait()
+		loadingManager.Transition()
 		Camera.CameraType = Enum.CameraType.Custom
 		Camera.CameraSubject = hum
 		UI:Destroy()
@@ -61,17 +61,15 @@ PlayButton.Activated:Connect(function()
 	end
 end)
 
---character selection
-local PG = player:WaitForChild("PlayerGui")
-local gui = PG:WaitForChild("Credits")
+--credits
+local credits = PG:WaitForChild("Credits")
 
 CreditsButton.Activated:Connect(function()
 	if not db2 then
 		db = true
 		db2 = true
-		trans:FireServer()
-		task.wait(2.25)
-		gui.Enabled = true
+		loadingManager.Transition()
+		credits.Enabled = true
 		db = false
 		db2 = false
 	end

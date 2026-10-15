@@ -29,9 +29,7 @@ local player = Players.LocalPlayer
 local PG = player:WaitForChild("PlayerGui")
 local gui = PG:WaitForChild("SelectionGui")
 
-player.CharacterAdded:Connect(function(char) --for when the player dies and the stuff associated with them just resets >:P
-	PG = player:WaitForChild("PlayerGui")
-	gui = PG:WaitForChild("SelectionGui")
+player.CharacterAdded:Connect(function(char) --for when the player dies/resets
 	gui.Enabled = false
 end)
 

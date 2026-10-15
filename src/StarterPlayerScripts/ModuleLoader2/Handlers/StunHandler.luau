@@ -1,7 +1,5 @@
 local player = game:GetService("Players").LocalPlayer
-local RS = game:GetService("ReplicatedStorage")
-
-local IAS = require(RS.UniversalModules.Energy)
+local IAS = require(player.PlayerScripts.Energy)
 
 local stun = {}
 

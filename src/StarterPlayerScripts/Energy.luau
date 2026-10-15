@@ -3,9 +3,9 @@ local player = game:GetService("Players").LocalPlayer
 local modules = player.PlayerScripts.ModuleLoader2.InputModules
 local connections = {}
 
-local InputActionSystem = {}
+local IAS = {}
 
-function InputActionSystem.ActReg(context: InputContext, specs: {any}) --my hail mary
+function IAS.ActReg(context: InputContext, specs: {any}) --my hail mary
 	for i, spec in ipairs(specs) do
 		local action = context:FindFirstChild(spec.name)
 		
@@ -31,14 +31,14 @@ function InputActionSystem.ActReg(context: InputContext, specs: {any}) --my hail
 	end
 end
 
-function InputActionSystem:Init(mods: {Instance})
+function IAS:Init(mods: {Instance})
 	for i, mod in ipairs(mods) do
 		local class = require(modules:FindFirstChild(mod.Name))
 		class.IAS()
 	end
 end
 
-function InputActionSystem:Disconnect(contexts: {Instance})
+function IAS:Disconnect(contexts: {Instance})
 	for i, context in ipairs(contexts) do
 		for j, connection in pairs(connections[context]) do
 			if connection then connection:Disconnect() end
@@ -48,7 +48,7 @@ function InputActionSystem:Disconnect(contexts: {Instance})
 	end
 end
 
-function InputActionSystem:GetActiveContexts()
+function IAS:GetActiveContexts()
 	local activeContexts = {}
 	
 	for i, context in ipairs(RS.InputContexts:GetChildren()) do
@@ -60,10 +60,10 @@ function InputActionSystem:GetActiveContexts()
 	return activeContexts
 end
 
-function InputActionSystem:GetInputModules()
+function IAS:GetInputModules()
 	local inputModules = {}
 	
-	for i, mod in modules:GetChildren() do
+	for i, mod in ipairs(modules:GetChildren()) do
 		if mod ~= modules.Weapon_Client then
 			table.insert(inputModules, mod)
 		end
@@ -72,4 +72,4 @@ function InputActionSystem:GetInputModules()
 	return inputModules
 end
 
-return InputActionSystem
+return IAS

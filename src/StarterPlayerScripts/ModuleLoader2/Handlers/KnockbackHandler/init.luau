@@ -1,7 +1,12 @@
 local player = game:GetService("Players").LocalPlayer
-
 local RS = game:GetService("ReplicatedStorage")
+
 local spacing = require(RS.UniversalModules.Space)
+
+local crusader
+RS.Remotes.ReturnAttribute.OnClientEvent:Connect(function(name: string)
+	crusader = name
+end)
 
 local char, root, hum, animator 
 local animations = script.Animations:GetChildren()
@@ -23,10 +28,9 @@ local function onCharacterChanged()
 	end
 end
 
-onCharacterChanged()
-
 player:GetPropertyChangedSignal("Character"):Connect(function()
 	table.clear(animTracks)
+	repeat task.wait() until crusader ~= nil
 	onCharacterChanged()
 end)
 

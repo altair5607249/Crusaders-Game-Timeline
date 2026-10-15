@@ -1,23 +1,32 @@
-local RS = game:GetService("ReplicatedStorage")
-local attack = RS.Remotes.Attack
 local player = game:GetService("Players").LocalPlayer
+local RS = game:GetService("ReplicatedStorage")
+local SSS = game:GetService("ServerScriptService")
 
-local IAS = require(RS.UniversalModules.Energy)
+local IAS = require(player.PlayerScripts.Energy)
 local spacing = require(RS.UniversalModules.Space)
 local timing = require(RS.UniversalModules.Time)
+
+local crusader
+RS.Remotes.ReturnAttribute.OnClientEvent:Connect(function(name: string)
+	print("Signal received")
+	crusader = name
+end)
+
+local attack = RS.Remotes.Attack
 
 local options, prevInput, count, comboExtension, db, char, hum, animator
 local animations = script.Animations
 local animTracks = {}
 
 local function onCharacterChanged()
+	print("Yay")
 	options = {1, 2, 3}
 	prevInput, count, comboExtension, db = 0, 0, 1, false
 	char = player.Character or player.CharacterAdded:Wait()
 	hum = char:WaitForChild("Humanoid")
 	animator = hum:WaitForChild("Animator")
 
-	local charAnims = animations[char:GetAttribute("Name")]:GetChildren()
+	local charAnims = animations[crusader]:GetChildren()
 
 	table.sort(charAnims, function(a, b)
 		return a:GetAttribute("Order") < b:GetAttribute("Order")
@@ -29,10 +38,15 @@ local function onCharacterChanged()
 	end
 end
 
-onCharacterChanged()
-
-player:GetPropertyChangedSignal("Character"):Connect(function()
+--[[player:GetPropertyChangedSignal("Character"):Connect(function()
 	table.clear(animTracks)
+	repeat task.wait() until crusader ~= nil
+	onCharacterChanged()
+end)]]
+
+player.CharacterAdded:Connect(function()
+	table.clear(animTracks)
+	repeat task.wait() until crusader ~= nil
 	onCharacterChanged()
 end)
 
@@ -54,7 +68,7 @@ end
 
 function m1:Attack(index: number)
 	--blue's randomizer stuff
-	if char:GetAttribute("Name") == "Bluee" and count < 4 then
+	if crusader == "Bluee" and count < 4 then
 		if #options == 0 or count == 1 then options = {1, 2, 3} end
 		local choice = math.random(1, #options)
 		index = options[choice]
@@ -65,7 +79,7 @@ function m1:Attack(index: number)
 	animTrack:Play()
 	attack:FireServer("M1_Server", index)
 	
-	local cooldown = timing.GetValue(char:GetAttribute("Name"), "M1", 2, index)
+	local cooldown = timing.GetValue(crusader, "M1", 2, index)
 	task.delay(cooldown, function()
 		db = false
 	end)

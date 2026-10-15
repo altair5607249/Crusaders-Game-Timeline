@@ -1,9 +1,14 @@
 local player = game:GetService("Players").LocalPlayer
-
 local RS = game:GetService("ReplicatedStorage")
 local RNS = game:GetService("RunService")
 
-local IAS = require(RS.UniversalModules.Energy)
+local IAS = require(player.PlayerScripts.Energy)
+local spacing = require(RS.UniversalModules.Space)
+
+local crusader
+RS.Remotes.ReturnAttribute.OnClientEvent:Connect(function(name: string)
+	crusader = name
+end)
 
 local TS = game:GetService("TweenService")
 local currentCam = workspace.CurrentCamera
@@ -21,8 +26,8 @@ local dashing, frontDash, dashCD = nil, nil, nil
 local function onCharacterChanged()
 	char = player.Character or player.CharacterAdded:Wait()
 	root = char:WaitForChild("HumanoidRootPart")
-	baseSpd = char:GetAttribute("bspd")
-	runSpd = char:GetAttribute("sspd")
+	baseSpd = spacing.GetValue(crusader, 1)
+	runSpd = spacing.GetValue(crusader, 2)
 	hum = char:WaitForChild("Humanoid")
 	animator = hum:WaitForChild("Animator")
 	
@@ -34,10 +39,9 @@ local function onCharacterChanged()
 	end
 end
 
-onCharacterChanged() --initial call
-
 player:GetPropertyChangedSignal("Character"):Connect(function()
 	table.clear(animDispatch)
+	repeat task.wait() until crusader ~= nil
 	onCharacterChanged() --callback in case of respawn and/or character swap
 end)
 
@@ -47,8 +51,7 @@ function movement.Dash(dashDur: number, direction: Vector3, anim: Animation, spe
 	if not dashing or specialCase then
 		if not dashing then dashing = true end
 		
-		if direction == root.CFrame.LookVector then frontDash = true
-		else char:SetAttribute("Immortal", true) end --iframes granted to back and side dashes
+		if direction == root.CFrame.LookVector then frontDash = true end
 		
 		animDispatch[anim]:Play()
 		
@@ -65,8 +68,7 @@ function movement.Dash(dashDur: number, direction: Vector3, anim: Animation, spe
 			x += dt
 			if x >= dashDur then
 				loop:Disconnect()
-				if frontDash == true then frontDash = false
-				else char:SetAttribute("Immortal", false) end
+				if frontDash == true then frontDash = false end
 			end
 		end)
 	task.delay(dashCD, function()

@@ -1,19 +1,23 @@
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
+local SSS = game:GetService("ServerScriptService")
+
 local managers = script.Parent.Parent.Managers
 
 local cooldown = require(managers.CooldownManager)
 local damager = require(managers.DamageManager)
-local stun = require(managers.StunManager)
 
-local UniMods = RS.UniversalModules
-local spacing = require(UniMods.Space)
-local timing = require(UniMods.Time)
+local CMS = require(SSS.ModuleLoader.Matter)
+local spacing = require(RS.UniversalModules.Space)
+local timing = require(RS.UniversalModules.Time)
 
 local m1Registry = {}
 
 Players.PlayerAdded:Connect(function(player)
-	m1Registry[player] = {0, 0} --1 is the count, 2 is the previous input
+	m1Registry[player] = {
+		prevCount = 0,
+		prevTick = 0
+	}
 end)
 
 Players.PlayerRemoving:Connect(function(player)
@@ -23,39 +27,35 @@ end)
 local m1Manager = {}
 
 function m1Manager.Action(player: Player, index: number)
-	local char = nil
+	local char = player.Character or player.CharacterAdded:Wait()
 	local comboExtension, cheating = 1, false
-			
-	if player:IsA("Player") then char = player.Character or player.CharacterAdded:Wait()
-	else char = player end --for dummies (remove after testing phase)
 	
 	if index > 4 then return end --just incase a modified client tries to pass their strike index as 4 when it isnt actually 4
-	if not cooldown:IsReady(player, "M1", "M1") or stun:GetStunState(player) then return end
+	if not cooldown:IsReady(player, "M1", "M1") or CMS:GetAttribute(player, "Stunned") then return end
 	
-	m1Registry[player][1] = timing.M1Timing(m1Registry[player][1], m1Registry[player][2], comboExtension)
+	local count = timing.M1Timing(m1Registry[player].prevCount, m1Registry[player].prevTick, comboExtension)
 	
 	if index == 4 then
-		if m1Registry[player][1] == 4 then 
+		if count == 4 then 
 			index = 4
 		else
 			warn("Index and Registry do not match!")
-			cheating = true
+			return
 		end
 	end
-	
-	m1Registry[player][2] = tick()
+
+	m1Registry[player].prevCount = count
+	m1Registry[player].prevTick = tick()
 	cooldown:Register(player, "M1", index)
 	
-	if cheating then return end
+	local crusader = CMS:GetAttribute(player, "Crusader")
 		
-	local attributes = char:GetAttributes()
-	local delayTime = timing.GetValue(attributes["Name"], "M1", 1, index)
-	local dmg = attributes["dmg"]
+	local delayTime = timing.GetValue(crusader, "M1", 1, index)
+	local dmg = spacing.GetValue(crusader, 4)
 	
 	local hum = char:WaitForChild("Humanoid")
-	local speed, jump = attributes["bspd"], attributes["jump"]
-	hum.WalkSpeed /= 3
-	hum.JumpPower /= 3
+	local speed, jump = spacing.GetValue(crusader, 1), spacing.GetValue(crusader, 3)
+	hum.WalkSpeed, hum.JumpPower = speed/3, jump/3 
 	
 	local attackData = {
 		atkdur = 0.2,
@@ -68,6 +68,7 @@ function m1Manager.Action(player: Player, index: number)
 	}
 	
 	task.delay(delayTime, function()
+		if CMS:GetAttribute(player, "Stunned") then return end
 		damager:Damage(player, attackData)	
 		--maybe add a lil' extra delay here for insurance on the commitment
 		hum.WalkSpeed, hum.JumpPower = speed, jump

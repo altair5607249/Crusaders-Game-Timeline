@@ -2,7 +2,9 @@ local RS = game:GetService("ReplicatedStorage")
 local remotes = RS.Remotes
 local player = game:GetService("Players").LocalPlayer
 
-local IAS = require(RS.UniversalModules.Energy)
+remotes.ClientReadiness:FireServer(true)
+
+local IAS = require(player.PlayerScripts.Energy)
 --fix architecture later
 local handlers = script.Handlers
 local stun = require(handlers.StunHandler)

@@ -2,7 +2,12 @@ local player = game:GetService("Players").LocalPlayer
 local RS = game:GetService("ReplicatedStorage")
 local attack = RS.Remotes.Attack
 
-local IAS = require(RS.UniversalModules.Energy)
+local IAS = require(player.PlayerScripts.Energy)
+
+local crusader
+RS.Remotes.ReturnAttribute.OnClientEvent:Connect(function(name: string)
+	crusader = name
+end)
 
 local context = RS.InputContexts.WeaponContext
 local switch = false

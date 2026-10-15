@@ -1,6 +1,7 @@
 local outputMods = script.OutputModules
 local remotes = game:GetService("ReplicatedStorage").Remotes
-local attack = remotes.Attack
+
+local CMS = require(script.Matter)
 
 local atkRoutes = {}
 
@@ -11,8 +12,12 @@ for i, folder in ipairs(script:GetChildren()) do
 	end
 end
 
-attack.OnServerEvent:Connect(function(player, atkRoute: string, modifier: number)
+remotes.Attack.OnServerEvent:Connect(function(player, atkRoute: string, modifier: number)
 	atkRoutes[atkRoute].Action(player, modifier)
+end)
+
+remotes.CharacterChange.OnServerEvent:Connect(function(player, crusader: string)
+	CMS.Life(player, crusader)
 end)
 
 --[[ reserved for the rpg :)

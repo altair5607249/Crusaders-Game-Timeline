@@ -1,9 +1,9 @@
 local configTable = {
-	--1 = bspd, 2 = sspd, 3 = jump, 4 = dmg query's basis, 5 = char name
-	Redd = {16, 24, 50, 5, "Redd"},
-	Yello = {15, 25, 50, 4, "Yello"},
-	Gleen = {18, 22, 50, 6, "Gleen"},
-	Bluee = {17, 23, 50, 5, "Bluee"}
+	--1 = bspd, 2 = sspd, 3 = jump, 4 = dmg query's basis
+	Redd = {16, 24, 50, 5},
+	Yello = {15, 25, 50, 4},
+	Gleen = {18, 22, 50, 6},
+	Bluee = {17, 23, 50, 5}
 }
 
 local kbSpecs = {
@@ -14,8 +14,8 @@ local kbSpecs = {
 
 local Space = {}
 
-function Space.GetValue()
-	
+function Space.GetValue(char: string, ID: number)
+	return configTable[char][ID]
 end
 
 function Space.Knockback(root: Part, attackData: {Instance})

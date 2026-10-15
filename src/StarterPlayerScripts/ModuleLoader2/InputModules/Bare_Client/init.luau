@@ -2,8 +2,13 @@ local player = game:GetService("Players").LocalPlayer
 local RS = game:GetService("ReplicatedStorage")
 local attack = RS.Remotes.Attack
 
-local IAS = require(RS.UniversalModules.Energy)
+local IAS = require(player.PlayerScripts.Energy)
 local timing = require(RS.UniversalModules.Time)
+
+local crusader
+RS.Remotes.ReturnAttribute.OnClientEvent:Connect(function(name: string)
+	crusader = name
+end)
 
 local context = RS.InputContexts.BareContext
 local switch = false
@@ -17,7 +22,7 @@ local function onCharacterChanged()
 	hum = char:WaitForChild("Humanoid")
 	animator = hum:WaitForChild("Animator")
 	
-	local charAnims = animations[char:GetAttribute("Name")]:GetChildren()
+	local charAnims = animations[crusader]:GetChildren()
 	
 	table.sort(charAnims, function(a, b)
 		return a:GetAttribute("Order") < b:GetAttribute("Order")
@@ -29,10 +34,9 @@ local function onCharacterChanged()
 	end
 end
 
-onCharacterChanged()
-
 player:GetPropertyChangedSignal("Character"):Connect(function()
 	table.clear(animTracks)
+	repeat task.wait() until crusader ~= nil
 	onCharacterChanged()
 end)
 
@@ -41,7 +45,7 @@ local bareRegistry = {0, 0, 0, 0}
 local bareStyle = {}
 
 function bareStyle.Input(move: number)
-	local constraint = timing.GetValue(char:GetAttribute("Name"), "Bare", 2, move)
+	local constraint = timing.GetValue(crusader, "Bare", 2, move)
 	if timing.CheckConstraint(bareRegistry[move], constraint) then return end
 	
 	print("Client reaction")

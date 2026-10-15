@@ -2,17 +2,17 @@ local outputMods = script.OutputModules
 local remotes = game:GetService("ReplicatedStorage").Remotes
 local attack = remotes.Attack
 
-local atkContexts = {}
+local atkRoutes = {}
 
 for i, folder in ipairs(script:GetChildren()) do
 	for i, module in ipairs(folder:GetChildren()) do
 		local class = require(module)
-		if module.Parent == outputMods then atkContexts[module.Name] = class end
+		if module.Parent == outputMods then atkRoutes[module.Name] = class end
 	end
 end
 
-attack.OnServerEvent:Connect(function(player, atkContext: string, modifier: number)
-	atkContexts[atkContext].Action(player, modifier)
+attack.OnServerEvent:Connect(function(player, atkRoute: string, modifier: number)
+	atkRoutes[atkRoute].Action(player, modifier)
 end)
 
 --[[ reserved for the rpg :)

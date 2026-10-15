@@ -12,7 +12,10 @@ Players.PlayerAdded:Connect(function(plr)
 			local clone = hitPart:Clone()
 			clone.Parent = char
 			
-			clone.CFrame = root.CFrame * CFrame.new(Vector3.new(0, 0, -2))
+			local pancake = CFrame.new(root.Position, root.Position + root.CFrame.LookVector * Vector3.new(1, 0, 1))
+			clone.CFrame = pancake * CFrame.new(0, 0, -2)
+			
+			print(clone.CFrame)
 			
 			local weld = Instance.new("WeldConstraint")
 			weld.Part0 = root

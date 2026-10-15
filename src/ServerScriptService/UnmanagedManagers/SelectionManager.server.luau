@@ -10,6 +10,7 @@ local function morph(player, name)
 	if model then
 		local newModel = model:Clone()
 		newModel.Name = player.Name
+		
 		player.Character = newModel
 		player.Character.Parent = workspace
 		local hum = player.Character.Humanoid

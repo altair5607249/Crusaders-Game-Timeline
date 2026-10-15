@@ -1,7 +1,9 @@
+local player = game:GetService("Players").LocalPlayer
+
 local RS = game:GetService("ReplicatedStorage")
 local RNS = game:GetService("RunService")
 
-local player = game:GetService("Players").LocalPlayer
+local IAS = require(RS.UniversalModules.Energy)
 
 local TS = game:GetService("TweenService")
 local currentCam = workspace.CurrentCamera
@@ -14,14 +16,17 @@ local animsTable = animations:GetChildren()
 local animDispatch = {}
 
 local char, root, baseSpd, runSpd, hum, animator = nil, nil, nil, nil, nil, nil
+local dashing, frontDash, dashCD = nil, nil, nil
 
-local function onCharacterAdded()
+local function onCharacterChanged()
 	char = player.Character or player.CharacterAdded:Wait()
 	root = char:WaitForChild("HumanoidRootPart")
 	baseSpd = char:GetAttribute("bspd")
 	runSpd = char:GetAttribute("sspd")
 	hum = char:WaitForChild("Humanoid")
 	animator = hum:WaitForChild("Animator")
+	
+	dashing, frontDash, dashCD = false, false, 8
 
 	for i, anim in pairs(animsTable) do
 		local animTrack = animator:LoadAnimation(anim)
@@ -29,22 +34,21 @@ local function onCharacterAdded()
 	end
 end
 
-onCharacterAdded() --initial call
+onCharacterChanged() --initial call
 
 player:GetPropertyChangedSignal("Character"):Connect(function()
 	table.clear(animDispatch)
-	onCharacterAdded() --callback in case of respawn and/or character swap
+	onCharacterChanged() --callback in case of respawn and/or character swap
 end)
 
 local movement = {}
 
-local dashing, frontDash, dashCD = false, false, 8
-
-function movement.Dash(dashDur: number, direction: Vector3, anim: Animation)
-	if not dashing then
-		dashing = true
+function movement.Dash(dashDur: number, direction: Vector3, anim: Animation, specialCase: boolean)
+	if not dashing or specialCase then
+		if not dashing then dashing = true end
 		
-		if direction == root.CFrame.LookVector then frontDash = true end
+		if direction == root.CFrame.LookVector then frontDash = true
+		else char:SetAttribute("Immortal", true) end --iframes granted to back and side dashes
 		
 		animDispatch[anim]:Play()
 		
@@ -60,9 +64,9 @@ function movement.Dash(dashDur: number, direction: Vector3, anim: Animation)
 			
 			x += dt
 			if x >= dashDur then
-				animDispatch[anim]:Stop()
 				loop:Disconnect()
-				if frontDash == true then frontDash = false end
+				if frontDash == true then frontDash = false
+				else char:SetAttribute("Immortal", false) end
 			end
 		end)
 	task.delay(dashCD, function()
@@ -82,24 +86,23 @@ function movement.Sprint(bool: boolean)
 	end
 end
 
-function movement.Parry() --this is gonna fun to program
-	
+function movement.Parry() --this is gonna be fun to program!
+	print("Parry") --remember that this should reduce player's cooldowns and stun the other player if landed!
 end
 
-local IASHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.IASHandler)
-
 local movementSpecs = { --it's so peak... so clean..!
-	{name = "DashForward", callback = function() movement.Dash(0.7, root.CFrame.LookVector, animations.DashForward) end},
-	{name = "DashBackward", callback = function() movement.Dash(0.3, -root.CFrame.LookVector, animations.DashBackward) end},
-	{name = "DashRight", callback = function() movement.Dash(0.3, root.CFrame.RightVector, animations.DashRight) end},
-	{name = "DashLeft", callback = function() movement.Dash(0.3, -root.CFrame.RightVector, animations.DashLeft) end},
+	{name = "DashForward", callback = function() movement.Dash(0.7, root.CFrame.LookVector, animations.DashForward, false) end},
+	{name = "DashBackward", callback = function() movement.Dash(0.3, -root.CFrame.LookVector, animations.DashBackward, false) end},
+	{name = "DashRight", callback = function() movement.Dash(0.3, root.CFrame.RightVector, animations.DashRight, false) end},
+	{name = "DashLeft", callback = function() movement.Dash(0.3, -root.CFrame.RightVector, animations.DashLeft, false) end},
+	{name = "Parry", callback = function() movement.Parry() end},
 	{name = "Sprint", callback = function(bool: boolean) movement.Sprint(bool) end}
 }
 
 function movement.IAS()
 	local context = RS.InputContexts.MovementContext
 
-	IASHandler.ActReg(context, movementSpecs)
+	IAS.ActReg(context, movementSpecs)
 end
 
 return movement

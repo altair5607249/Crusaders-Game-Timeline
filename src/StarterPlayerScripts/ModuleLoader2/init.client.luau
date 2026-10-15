@@ -1,17 +1,41 @@
-local remotes = game:GetService("ReplicatedStorage").Remotes
+local RS = game:GetService("ReplicatedStorage")
+local remotes = RS.Remotes
 local player = game:GetService("Players").LocalPlayer
-local IAS = require(script.Handlers.IASHandler)
-local stun = require(script.Handlers.StunHandler)
-local inputMods = script.InputModules:GetChildren()
 
-for i, module in ipairs(inputMods) do
-	require(module)
+local IAS = require(RS.UniversalModules.Energy)
+--fix architecture later
+local handlers = script.Handlers
+local stun = require(handlers.StunHandler)
+local kb = require(handlers.KnockbackHandler)
+
+local modules = script.InputModules
+
+local movement = nil
+
+local inputMods = {}
+
+for i, module in ipairs(modules:GetChildren()) do
+	local class = require(module)
+	if module == modules.Weapon_Client then continue end
+	table.insert(inputMods, module)
+	
+	--fix architecture later
+	if module == modules.Movement then movement = class end
 end
 
 IAS:Init(inputMods)
 
-remotes.ToggleStun.OnClientEvent:Connect(function(duration: number)
-	stun:Toggle(duration)
+--fix architecture later
+remotes.ToggleStun.OnClientEvent:Connect(function(atktype: string, duration: number)
+	stun:Toggle(atktype, duration)
+end)
+
+remotes.ToggleDash.OnClientEvent:Connect(function(duration, direction, anim, specialCase)
+	movement.Dash(duration, direction, anim, specialCase)
+end)
+
+remotes.Knockback.OnClientEvent:Connect(function(attackData: {Instance}, targetRoot: Part)
+	kb.Casing(attackData, targetRoot)
 end)
 
 --[[reserved for the rpg :)

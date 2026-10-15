@@ -22,7 +22,8 @@ versions = [
     {"version": 4500, "message": "administration system and mobile support"},
     {"version": 5000, "message": "weapon system"},
     {"version": 5750, "message": "all weapon-style movesets finished"},
-    {"version": 6750, "message": ""},
+    {"version": 6500, "message": "settings"},
+    {"version": 6930, "message": "collision"}
 ]
 
 def download_version(version: int):

@@ -45,8 +45,6 @@ function DamageManager.Damage(origin1, origin2, hum, atk_dur, atk_rad, CD, dmg, 
 				targetChar:SetAttribute("Stunned", true) --stun
 				local speed = targetChar:GetAttribute("bspd")
 				local jump = targetChar:GetAttribute("jump")
-				targetHum.WalkSpeed = 0
-				targetHum.JumpPower = 0
 				
 				--knockback
 				if dmgType == "heavy" then
@@ -55,6 +53,8 @@ function DamageManager.Damage(origin1, origin2, hum, atk_dur, atk_rad, CD, dmg, 
 				local targetPlr = Players:GetPlayerFromCharacter(targetChar)
 				if targetPlr ~= nil then --for players
 					knockback:FireClient(targetPlr, velocity)
+					targetHum.WalkSpeed = 0
+					targetHum.JumpPower = 0
 				else --for dummies
 					targetRoot.AssemblyLinearVelocity = velocity
 				end
@@ -65,7 +65,7 @@ function DamageManager.Damage(origin1, origin2, hum, atk_dur, atk_rad, CD, dmg, 
 					if storedHealth > targetHum.Health then return end --prevents player from unstunning mid combo (inferred from health decreasing)
 					targetChar:SetAttribute("Stunned", false)
 					targetHum:ChangeState(Enum.HumanoidStateType.GettingUp)
-					if speed ~= nil and jump ~= nil then
+					if targetPlr ~= nil then
 						targetHum.WalkSpeed = speed
 						targetHum.JumpPower = jump
 					end

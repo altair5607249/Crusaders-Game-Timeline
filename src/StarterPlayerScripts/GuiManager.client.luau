@@ -4,9 +4,6 @@ local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local hum = char:FindFirstChild("Humanoid")
-local PS = player:WaitForChild("PlayerScripts")
-local PM = require(PS:WaitForChild("PlayerModule"))
-local controls = PM:GetControls()
 local Camera = workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 
@@ -14,7 +11,6 @@ local RS = game:GetService("ReplicatedStorage")
 local remotes = RS:WaitForChild("Remotes")
 local trans = remotes:WaitForChild("TransitionServer")
 local load = remotes:WaitForChild("LoadingClient")
-local controller = remotes:WaitForChild("ControlsServer")
 local humChange = remotes:WaitForChild("HumChange")
 
 local CamPart = RS:FindFirstChild("camPart"):Clone()
@@ -54,7 +50,6 @@ PlayButton.Activated:Connect(function()
 		db2 = true
 		trans:FireServer()
 		task.wait(2.25)
-		controller:FireServer(true)
 		humChange.OnClientEvent:Connect(function(humanoid)
 			hum = humanoid
 		end)

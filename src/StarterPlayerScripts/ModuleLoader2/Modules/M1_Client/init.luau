@@ -8,7 +8,7 @@ local animator = hum:WaitForChild("Animator")
 
 local CD = char:GetAttribute("cd")
 local CD2 = CD
-local CD3 = CD + 1
+local CD3 = CD + 0.5
 
 local RS = game:GetService("ReplicatedStorage")
 local remotes = RS.Remotes
@@ -60,7 +60,7 @@ function m1:Click()
 		
 		--resets the combo
 		if count == 4 then
-			CD = CD3
+			CD += 1
 			count = 0
 		else
 			CD = CD2
@@ -84,5 +84,19 @@ function m1.Attack()
 	local animation = animations[count]
 	animation:Play()
 end
+
+local IASHandler = require(script.Parent:WaitForChild("IASHandler"))
+
+local mouseSpecs = {
+	{name = "Punch", callback = function() m1:Click() end}
+}
+
+function m1.IAS()
+	local context = RS:WaitForChild("InputContexts"):WaitForChild("MouseContext")
+
+	IASHandler.ActReg(context, mouseSpecs)
+end
+
+m1.IAS()
 
 return m1

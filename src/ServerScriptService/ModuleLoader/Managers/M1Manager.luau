@@ -12,7 +12,7 @@ local dmgManager = require(managers.DamageManager)
 
 local db = false
 
-function m1Manager.Action(player, origin, char, hum, atkdur, atkrad, cd, count, dmg)
+function m1Manager:Action(player, origin, char, hum, atkdur, atkrad, cd, count, dmg)
 	local newDmg = 0.5*(count-1)^2+dmg --dmg calculations (parabolic curve)
 	
 	local delayTime = 0.15 --intentional frame delay
@@ -43,7 +43,7 @@ end
 attack.OnServerEvent:Connect(function(player, origin, char, hum, atkdur, atkrad, cd, count, dmg)
 	if not db then
 		db = true --server-side debounce check just in-case
-		m1Manager.Action(player, origin, char, hum, atkdur, atkrad, cd, count, dmg)
+		m1Manager:Action(player, origin, char, hum, atkdur, atkrad, cd, count, dmg)
 	end
 end)
 

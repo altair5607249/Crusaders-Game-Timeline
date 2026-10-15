@@ -10,10 +10,6 @@ local weapons = { --improve later to include idle anims
 }
 
 local player = game:GetService("Players").LocalPlayer
-local PS = player:WaitForChild("PlayerScripts")
-local PM = require(PS:WaitForChild("PlayerModule"))
-local controls = PM:GetControls()
-
 function Weapon.new(tool)
 	local self = setmetatable({}, Weapon)
 	self.tool = tool

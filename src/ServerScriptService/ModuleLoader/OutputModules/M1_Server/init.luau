@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local SSS = game:GetService("ServerScriptService")
+local TS = game:GetService("TweenService")
 
 local managers = script.Parent.Parent.Managers
 
@@ -9,6 +10,8 @@ local damager = require(managers.DamageManager)
 
 local spacing = require(RS.UniversalModules.Space)
 local timing = require(RS.UniversalModules.Time)
+
+local vfxInfo = TweenInfo.new(0.7, Enum.EasingStyle.Cubic, Enum.EasingDirection.InOut)
 
 local weaponQuirks = {
 	Redd = {
@@ -122,10 +125,29 @@ function m1Manager.Action(player: Player, index: number)
 					local stamina = hum:GetAttribute("Stamina")
 					hum:SetAttribute("Stamina", stamina + 6) 
 				end
+				
+				if index == 4 then
+					local impact = RS.AttackVFX["All-Purpose Ring"]:Clone()
+					impact.Parent = workspace
+					impact.CFrame = root.CFrame * CFrame.new(0, 0, -5)
+					
+					--customizing the impact
+					impact.Material = Enum.Material.Neon
+					
+					local tweenSize = TS:Create(impact, vfxInfo, {Size = impact.Size * 8})
+					local tweenTp = TS:Create(impact, vfxInfo, {Transparency = 1})
+					
+					tweenSize:Play()
+					tweenTp:Play()
+					tweenTp.Completed:Connect(function()
+						tweenSize:Destroy()
+						tweenTp:Destroy()
+						impact:Destroy()
+					end)
+				end
 			end
 		end)	
 		
-		--maybe add a lil' extra delay here for insurance on the commitment
 		hum.WalkSpeed = speed
 	end)
 end

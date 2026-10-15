@@ -12,8 +12,6 @@ local vfx = RS.AttackVFX.ImpactSpeed
 local YM2 = {}
 
 function YM2:Trigger(player: Player)
-	print("ym2")
-	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local root = char:WaitForChild("HumanoidRootPart")
 	local leg: Part = char:FindFirstChild("Right Leg")

@@ -16,8 +16,6 @@ end
 local RM1 = {}
 
 function RM1:Trigger(player: Player)
-	print("weapon rm1")
-	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum: Humanoid = char:WaitForChild("Humanoid")
 	local root = char:WaitForChild("HumanoidRootPart")
@@ -30,6 +28,7 @@ function RM1:Trigger(player: Player)
 		atkdur = duration,
 		atkrad = 6.5,
 		atktype = "light",
+		customSound = script.Bonk,
 		dmg = 25,
 		ID = 1,
 		style = "Weapon"

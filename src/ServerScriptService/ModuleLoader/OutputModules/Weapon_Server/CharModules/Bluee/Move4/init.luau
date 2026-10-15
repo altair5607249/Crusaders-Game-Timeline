@@ -31,8 +31,6 @@ end
 local BM4 = {}
 
 function BM4:Trigger(player: Player)
-	print("weapon bm4")
-
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum: Humanoid = char:WaitForChild("Humanoid")
 	local root: Part = char:WaitForChild("HumanoidRootPart")

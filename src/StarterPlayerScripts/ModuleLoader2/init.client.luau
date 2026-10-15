@@ -27,6 +27,7 @@ remotes.ClientReadiness:FireServer(true)
 
 local IAS = require(player.PlayerScripts.Energy)
 local kb = require(script.Handlers.KnockbackHandler)
+local bgm = require(script.Handlers.MusicHandler)
 
 local modules = script.InputModules
 
@@ -46,12 +47,6 @@ remotes.Knockback.OnClientEvent:Connect(function(atktype: string, momentum: Vect
 	kb.Casing(atktype, momentum, targetRoot)
 end)
 
---[[reserved for the rpg :)
-local CS = game:GetService("CollectionService")
-
-CS:GetInstanceAddedSignal("Weapon"):Connect(Weapon.new)
-
-for i, object in CS:GetTagged("Weapon") do
-	if object:FindFirstAncestorOfClass("ReplicatedStorage") then continue end
-	Weapon.new(object)
-end]]
+remotes.BGMVolume.OnClientEvent:Connect(function(music: Sound, enabled: boolean)
+	bgm.Volume(music, enabled)
+end)

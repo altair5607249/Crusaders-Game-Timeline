@@ -29,8 +29,8 @@ end
 local positions = {
 	CFrame.new(-7.5, 0, 0) * CFrame.Angles(0, -math.rad(90), 0), --west
 	CFrame.new(7.5, 0, 0) * CFrame.Angles(0, math.rad(90), 0), --east
-	CFrame.new(0, 0, 7.5) * CFrame.Angles(0, math.rad(180), 0), --south
-	CFrame.new(0, 0, -7.5), --north
+	CFrame.new(0, 0, 7.5), --south
+	CFrame.new(0, 0, -7.5) * CFrame.Angles(0, math.rad(180), 0), --north
 	CFrame.new(7, 0, 7) * CFrame.Angles(0, math.rad(45), 0), --northeast
 	CFrame.new(-7, 0, -7) * CFrame.Angles(0, -math.rad(135), 0), --southwest
 	CFrame.new(7, 0, -7) * CFrame.Angles(0, math.rad(135), 0), --southeast

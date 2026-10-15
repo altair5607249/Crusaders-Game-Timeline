@@ -189,6 +189,24 @@ function DamageManager:Damage(player: Player, attributes: {any})
 				
 				if targetHum:GetAttribute("Reflect") then
 					hum:TakeDamage(attributes.dmg / targetHum:GetAttribute("Reflect"))
+					
+					local reflect = script.ReflectHit:Clone()
+					reflect.Parent = root
+					reflect:Play()
+					reflect.Ended:Connect(function()
+						reflect:Destroy()
+					end)
+					
+					if attributes["precedent"] ~= true then
+						if not attributes["noStun"] then --ideal for shockwaves
+							stun:DurReg(player, targetPlr, attributes["atktype"], attributes["style"], attributes["ID"], "Hit") --hitstun 
+						end
+
+						if not attributes["noKB"] then --ideal for DOT
+							kb.Eval(player, targetPlr, targetRoot, attributes["atktype"]) --knockback
+						end
+					end
+					
 					continue
 				end
 				

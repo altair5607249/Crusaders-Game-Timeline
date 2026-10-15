@@ -12,8 +12,6 @@ local duration: number = timing.GetValue("Redd", "Weapon", 3, 3) - delayTime
 local RM3 = {}
 
 function RM3:Trigger(player: Player)
-	print("weapon rm3")
-
 	local char: Model = player.Character or player.CharacterAdded:Wait()
 	local hum: Humanoid = char:WaitForChild("Humanoid")
 	local root: Part = char:WaitForChild("HumanoidRootPart")
@@ -26,6 +24,7 @@ function RM3:Trigger(player: Player)
 		atkdur = duration - 0.5, --0.5s of endlag
 		atkrad = 10,
 		atktype = "medium",
+		customSound = script.Slice,
 		dmg = 5,
 		DOT = 0.1,
 		expanding = 5,
@@ -45,14 +44,19 @@ function RM3:Trigger(player: Player)
 	local highlight = Instance.new("Highlight")
 	highlight.Parent = handle
 	
+	local att0 = handle:FindFirstChildWhichIsA("Attachment")
+	local att1 = Instance.new("Attachment")
+	att1.Parent = handle
+	att1.CFrame = att0.CFrame * CFrame.new(0, 0, -2)
+	
 	local trail = Instance.new("Trail")
-	trail.Attachment0 = handle:FindFirstChildWhichIsA("Attachment")
-	trail.Attachment1 = root:FindFirstChildWhichIsA("Attachment")
+	trail.Attachment0 = att0
+	trail.Attachment1 = att1
 	trail.Parent = handle
 	
 	--customizing the trail
 	trail.Color = ColorSequence.new(Color3.new(1, 0, 0))
-	trail.Lifetime = 0.2
+	trail.Lifetime = 0.25
 	
 	debby:AddItem(highlight, attackData.atkdur)
 	debby:AddItem(trail, attackData.atkdur)

@@ -13,8 +13,6 @@ local tweenInfo = TweenInfo.new(duration*4, Enum.EasingStyle.Sine, Enum.EasingDi
 local YM1 = {}
 
 function YM1:Trigger(player: Player)
-	print("ym1")
-
 	local char = player.Character or player.CharacterAdded:Wait()
 	local root: Part = char:WaitForChild("HumanoidRootPart")
 
@@ -43,18 +41,22 @@ function YM1:Trigger(player: Player)
 	testPart.CFrame = CFrame.lookAt(root.Position, root.Position + finalVector) * CFrame.new(0, 0, -finalVector.Magnitude/2)
 	testPart.Color = Color3.new(1, 1, 0)
 	testPart.Material = Enum.Material.Neon
-	testPart.Reflectance = 0.25
+	testPart.Reflectance = 0.5
 	testPart.Size = Vector3.new(radius, radius, finalVector.Magnitude)
 	testPart.Transparency = 0.25
 	testPart.Parent = workspace
 	
 	local tweenBlast = TS:Create(testPart, tweenInfo, {Transparency = 1})
 	tweenBlast:Play()
-	task.spawn(function()
-		tweenBlast.Completed:Connect(function()
-			tweenBlast:Destroy()
-			testPart:Destroy()
-		end)
+	tweenBlast.Completed:Connect(function()
+		tweenBlast:Destroy()
+	end)
+	
+	local tweenSize = TS:Create(testPart, tweenInfo, {Size = Vector3.new(0, 0, finalVector.Magnitude)})
+	tweenSize:Play()
+	tweenSize.Completed:Connect(function()
+		tweenSize:Destroy()
+		testPart:Destroy()
 	end)
 	
 	--copy and pastable move sfx code

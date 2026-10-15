@@ -12,14 +12,19 @@ local retraction = 0.2
 local GM1 = {}
 
 function GM1:Trigger(player: Player)
-	print("weapon gm1")
-
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum = char:WaitForChild("Humanoid")
 	local root: Part = char:WaitForChild("HumanoidRootPart")
 	
+	local sfx = script.Throw:Clone()
+	sfx.Parent = root
+	sfx:Play()
+	sfx.Ended:Connect(function()
+		sfx:Destroy()
+	end)
+	
 	local rootFrame = root.CFrame
-	local extendedHitbox = rootFrame * CFrame.new(-1, 0.5, -35)
+	local extendedHitbox = rootFrame * CFrame.new(0, 0.5, -35)
 	
 	local attackData = { --direct hit
 		atkdur = duration - retraction * 2,
@@ -49,6 +54,7 @@ function GM1:Trigger(player: Player)
 		atkdur = duration - retraction * 2,
 		atkrad = 5,
 		atktype = "medium",
+		customSound = script.IndirectHit,
 		dmg = 25,
 		ID = 1,
 		noKB = true,
@@ -57,13 +63,6 @@ function GM1:Trigger(player: Player)
 	}
 	
 	damager:Damage(player, attackData2)
-	
-	local sfx = script.Throw:Clone()
-	sfx.Parent = root
-	sfx:Play()
-	sfx.Ended:Connect(function()
-		sfx:Destroy()
-	end)
 end
 
 return GM1

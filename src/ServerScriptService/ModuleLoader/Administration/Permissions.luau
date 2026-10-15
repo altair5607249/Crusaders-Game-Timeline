@@ -8,7 +8,7 @@ local adminRegistry = {
 	Regulators = {
 		Magnitude = 8, --this indicates the level of authority one possesses
 		Eudaimonic = {
-			[1686067617] = {"Avyā B. Elyssium L., the Last Human,", "<font color ='#000000'>%s</font>"}, 
+			[7486368182] = {"Avyā B. Elyssium L., the Last Human,", "<font color ='#000000'>%s</font>"},
 			[1147951417] = {"Veryn, the Wonder,", "<font color ='#888888'>%s</font>"}
 		},
 	},
@@ -27,14 +27,15 @@ local adminRegistry = {
 			[306366365] = {"Knox, the Alter Ego,", "<font color ='#00FF00'>%s</font>"}, --Zakyros's alter ego
 			[3570093153] = {"Sage, the Earth Standing,", "<font color ='#B2AC88'>%s</font>"}, --Zakyros's wife (Askafroa)
 			[474688120] = {"Jazz, the Jewel,", "<font color ='#FF0000'>%s</font>"}, --ancient creature of the Abyss, friend of Avyā
-			[2057014980] = {"Yochanan, the Merry Minstrel,", "<font color ='#825825'>%s</font>"},
-			[1036700937] = {"Lord F-150, the Symphony of Syzygy,", "<font color ='#0088FF'>%s</font>"}
+			[2057014980] = {"Yochanan, the Merry Minstrel,", "<font color ='#825825'>%s</font>"}, --Sigiward's old aide
+			[1036700937] = {"Lord F-150, the Symphony of Syzygy,", "<font color ='#0088FF'>%s</font>"}, --rival of Sigiward on the racetrack
+			[1686067617] = {"Dinosaur, not Dinosuar,", "<font color ='#FFC0CB'>%s</font>"}, --ancient creature of the Abyss, friend of Avyā
 		},
 	},
 	Redeemers = {
 		Magnitude = 6,
 		Wonder = {
-			[1631980288] = {"Ryushi Akuseru, the Wonder of What Matters,", "<font color ='#FF69B4'>%s</font>"}
+			[1631980288] = {"Ryushi Akuseru, the Wonder of What Matters,", "<font color ='#FF69B4'>%s</font>"} --former Sovereign
 		},
 		Reverend = {},
 		Vindicator = {},
@@ -51,7 +52,7 @@ local adminRegistry = {
 		Suzerain = {},
 		Mediator = {},
 		Visionary = {
-			[1198289487] = {"Adelheid", "<font color ='#FF00FF'>%s</font>"}
+			[1198289487] = {"Adelheid", "<font color ='#FF00FF'>%s</font>"} --previous visionary of Earth
 		}
 	},
 }

@@ -3,7 +3,7 @@
   "properties": {
     "AudioContent": "rbxassetid://88967797911082",
     "Looped": true,
-    "PlaybackSpeed": 1.5,
-    "RollOffMode": "InverseTapered"
+    "RollOffMode": "InverseTapered",
+    "PlaybackSpeed": 1.5
   }
 }

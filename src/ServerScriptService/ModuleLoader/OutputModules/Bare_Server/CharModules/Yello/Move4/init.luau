@@ -14,22 +14,40 @@ local tweenInfo1 = TweenInfo.new(0.85, Enum.EasingStyle.Sine, Enum.EasingDirecti
 local YM4 = {}
 
 function YM4:Trigger(player: Player)
-	print("ym4")
-	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local root: Part = char:WaitForChild("HumanoidRootPart")
 	
 	local duration = timing.GetValue("Yello", "Bare", 3, 4) - timing.GetValue("Yello", "Bare", 1, 4)
-	
-	local clone = portal:Clone()
-	
-	clone.Position = root.Position
-	clone.Parent = workspace
-	
-	task.wait(duration - 0.01) --oh my, secret extra delay?? how scandalous!!!
-	
-	local dmg = 20
 	local distance = 50
+	
+	local burst1 = Instance.new("Part")
+	burst1.CFrame = root.CFrame
+	burst1.Parent = workspace
+	
+	--customizing the burst
+	burst1.Anchored = true
+	burst1.CanCollide = false
+	burst1.CanQuery = false
+	burst1.Material = Enum.Material.Neon
+	burst1.Shape = Enum.PartType.Ball
+	burst1.Transparency = 0.4
+	
+	local burst2 = burst1:Clone()
+	
+	local tweenSize1 = TS:Create(burst1, tweenInfo1, {Size = burst1.Size * 10})
+	local tweenTp1 = TS:Create(burst1, tweenInfo1, {Transparency = 1})
+	
+	tweenSize1:Play()
+	tweenTp1:Play()
+	
+	tweenTp1.Completed:Connect(function()
+		tweenSize1:Destroy()
+		tweenTp1:Destroy()
+		burst1:Destroy()
+	end)
+	
+	local tweenSize2 = TS:Create(burst2, tweenInfo1, {Size = burst2.Size * 10})
+	local tweenTp2 = TS:Create(burst2, tweenInfo1, {Transparency = 1})
 	
 	local attachment0 = Instance.new("Attachment")
 	attachment0.Parent = root
@@ -52,17 +70,7 @@ function YM4:Trigger(player: Player)
 	whoosh.Width1 = 0
 	whoosh.Parent = root
 	
-	local rift = clone:FindFirstChild("Images/4x4 ripple")
-	
-	local proxy = Instance.new("NumberValue") --cant directly tween a particle's transparency
-	proxy.Value = 0
-	
-	proxy.Changed:Connect(function(alpha)
-		rift.Transparency = NumberSequence.new(alpha)
-	end)
-	
 	local tweenWhoosh = TS:Create(whoosh, tweenInfo0, {Width0 = 0})
-	local tweenValue = TS:Create(proxy, tweenInfo1, {Value = 1})
 	
 	local raycastParams = RaycastParams.new()
 	raycastParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -73,14 +81,13 @@ function YM4:Trigger(player: Player)
 	local result = workspace:Raycast(root.Position, direction, raycastParams)
 	
 	if not result then
-		root.CFrame = finalVector
-	else --hopefully prevents phasing
-		root.CFrame = CFrame.new(result.Position)
+		root.CFrame = finalVector --teleports the full distance
+	else --prevents phasing
+		root.CFrame = CFrame.new(result.Position) * CFrame.new(0, 0, 0.5) --skin buffer
 	end
 		
 	player:SetAttribute("lastServerPos", root.Position)
 	
-	--copy and pastable move sfx code
 	local sfx = script.Sound:Clone()
 	sfx.Parent = root
 	sfx:Play()
@@ -92,19 +99,19 @@ function YM4:Trigger(player: Player)
 		if player.Parent ~= Players then return end
 		
 		tweenWhoosh:Play()
-		tweenValue:Play()
 		
 		local attackData = {
 			atkdur = duration,
 			atkrad = 10,
-			atktype = "light",
-			dmg = dmg,
+			atktype = "medium",
+			dmg = 20,
 			ID = 4,
 			noKB = true,
 			noSound = true,
 			origin = root,
 			style = "Bare"
 		}
+		
 		damager:Damage(player, attackData)
 		
 		tweenWhoosh.Completed:Connect(function()
@@ -114,10 +121,16 @@ function YM4:Trigger(player: Player)
 			attachment1:Destroy()
 		end)
 		
-		tweenValue.Completed:Connect(function()
-			tweenValue:Destroy()
-			proxy:Destroy()
-			clone:Destroy()
+		burst2.CFrame = root.CFrame
+		burst2.Parent = workspace
+		
+		tweenSize2:Play()
+		tweenTp2:Play()
+		
+		tweenTp2.Completed:Connect(function()
+			tweenSize2:Destroy()
+			tweenTp2:Destroy()
+			burst2:Destroy()
 		end)
 	end)
 end

@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local SSS = game:GetService("ServerScriptService")
+local TS = game:GetService("TweenService")
 
 local toggle = RS.Remotes.ToggleStun
 local mouselock = RS.Remotes.Mouselock
@@ -12,6 +13,8 @@ local stunPriority = {
 	Recovery = 1,
 	Hit = 2
 }
+
+local staticInfo = TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 
 local stunManager = {}
 
@@ -38,6 +41,8 @@ function stunManager.Eval(player: Player, atktype: string, duration: number, sou
 	
 	local previousSource = char:GetAttribute("StunSource")
 	if not previousSource or stunPriority[source] > stunPriority[previousSource] then char:SetAttribute("StunSource", source) end
+	
+	local static: Part? = nil
 	
 	if not char:GetAttribute("StunExt") then
 		char:SetAttribute("StunExt", true)
@@ -68,7 +73,27 @@ function stunManager.Eval(player: Player, atktype: string, duration: number, sou
 				hum.WalkSpeed = spacing.GetValue(crusader, 1)
 			end 
 			
-			if head:FindFirstChild("Static") then head:FindFirstChild("Static"):Destroy() end
+			if static then
+				local staticVfx: ParticleEmitter = static.VFX_Attachment:FindFirstChildWhichIsA("ParticleEmitter")
+				local staticWeld: WeldConstraint = static.StaticWeld
+				
+				local alpha = Instance.new("NumberValue")
+				alpha.Value = 0.3
+				
+				local tweenStaticOut = TS:Create(alpha, staticInfo, {Value = 1})
+				
+				alpha.Changed:Connect(function(value)
+					staticVfx.Transparency = NumberSequence.new(value)
+				end)
+				
+				tweenStaticOut:Play()
+				tweenStaticOut.Completed:Connect(function()
+					tweenStaticOut:Destroy()
+					alpha:Destroy()
+					staticWeld:Destroy()
+					static:Destroy()
+				end)
+			end
 		end)
 	end
 
@@ -76,10 +101,36 @@ function stunManager.Eval(player: Player, atktype: string, duration: number, sou
 		char:SetAttribute("StunStart", true)
 		if char:HasTag("Running") then char:RemoveTag("Running") end
 		
-		if stunPriority[source] == "Hit" then
-			local static = RS.AttackVFX.Static:Clone()
+		if stunPriority[source] == 2 then --only for hitstun
+			static = RS.AttackVFX.Static:Clone()
 			static.Parent = head
 			static.CFrame = head.CFrame
+			
+			local staticVfx = static.VFX_Attachment:FindFirstChildWhichIsA("ParticleEmitter")
+			local alpha = Instance.new("NumberValue")
+			alpha.Value = 1
+			
+			local tweenStaticIn = TS:Create(alpha, staticInfo, {Value = 0.3})
+			
+			alpha.Changed:Connect(function(value)
+				staticVfx.Transparency = NumberSequence.new(value)
+			end)
+			
+			tweenStaticIn:Play()
+			tweenStaticIn.Completed:Connect(function()
+				tweenStaticIn:Destroy()
+				alpha:Destroy()
+			end)
+			
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = head
+			weld.Part1 = static
+			weld.Parent = static
+			weld.Name = "StaticWeld"
+			
+			if atktype == "heavy" then
+				toggle:FireClient(player)
+			end
 		end
 	end
 end

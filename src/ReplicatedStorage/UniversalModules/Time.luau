@@ -32,7 +32,7 @@ local configTable = {
 local Time = {}
 
 function Time.GetValue(char: string, style: string, category: number, ID: number)
-	return configTable[char][style][category][ID]
+	return configTable[char][style][category][ID] :: number | boolean
 end
 
 function Time.CheckConstraint(prevInput: number, constraint: number) --checks if the constraint is active

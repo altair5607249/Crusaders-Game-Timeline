@@ -53,10 +53,10 @@ end
 
 function Space.Knockback(attackerRoot: Part, targetRoot: Part, atktype: string)
 	local modifier = kbSpecs[atktype]
-	local direction = -(attackerRoot.Position - targetRoot.Position).Unit
+	local direction = (targetRoot.Position - attackerRoot.Position).Unit
 	
 	local base = kbSpecs.medium
-	local velocity: Vector3 = ((direction*100) - direction*((base^modifier)/base)) * (base/modifier) --random formula i made up based on feel
+	local velocity: Vector3 = ((direction*100) - direction*((base^modifier)/base)) * (base/modifier) --random formula i made up based on feel; will recalibrate to make cleaner in a future update
 	
 	return velocity
 end

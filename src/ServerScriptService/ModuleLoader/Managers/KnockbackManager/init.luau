@@ -19,9 +19,9 @@ function knockbackManager.Eval(player: Player, targetPlr: Player, targetRoot: Pa
 	
 	local attackerRoot: Part = player.Character:FindFirstChild("HumanoidRootPart")
 
-	local velocity = spacing.Knockback(attackerRoot, targetRoot, atktype)
 	local mass = targetRoot.AssemblyMass
-	local momentum = mass * velocity
+	local velocity = spacing.Knockback(attackerRoot, targetRoot, atktype)
+	local momentum = mass * velocity --p = m*v
 	
 	local targetChar = targetRoot.Parent
 	

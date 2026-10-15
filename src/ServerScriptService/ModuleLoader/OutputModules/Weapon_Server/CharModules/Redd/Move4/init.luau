@@ -63,6 +63,13 @@ function RM4:Trigger(player: Player)
 
 	loadRoosterIn.Completed:Connect(function() 
 		loadRoosterIn:Destroy()
+		
+		local initSfx = script.Appear:Clone() --note: make a module that i can call to do all of this in one go
+		initSfx.Parent = root
+		initSfx:Play()
+		initSfx.Ended:Connect(function()
+			initSfx:Destroy()
+		end)
 	end)
 
 	local weld

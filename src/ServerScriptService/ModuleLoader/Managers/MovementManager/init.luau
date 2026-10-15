@@ -4,6 +4,7 @@ local RS = game:GetService("ReplicatedStorage")
 local RNS = game:GetService("RunService")
 local SS = game:GetService("ServerStorage")
 local SSS = game:GetService("ServerScriptService")
+local TS = game:GetService("TweenService")
 
 local cooldownManager = require(SSS.ModuleLoader.Managers.CooldownManager)
 local stunManager = require(SSS.ModuleLoader.Managers.StunManager)
@@ -14,9 +15,10 @@ local timing = require(RS.UniversalModules.Time)
 local dashChecks = 8
 local minPeriod = 0.05
 local period = 0.08 --how often the anticheat checks movement (in seconds)
-local paddingFreq = 70 --to be scaled with the periodic cycle, since padding adds flat rates
+local paddingFreq = 80 --to be scaled with the periodic cycle, since padding adds flat rates
 local padding = paddingFreq * period --for network jitter, packet burstiness, physics interpolation, etc.
-local maxStamina: number? --adjust to match your real cap if different
+local maxStamina: number? --adjust to match the real cap across diff players
+local vfxInfo = TweenInfo.new(0.7, Enum.EasingStyle.Cubic, Enum.EasingDirection.InOut)
 
 local techSpecs = {
 	dashSpecs = {
@@ -186,7 +188,7 @@ local function registerMovement(player: Player, scope: string, mechanic: string,
 	local crusader = player:GetAttribute("Crusader")
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum: Humanoid = char:WaitForChild("Humanoid")
-	local root = char:WaitForChild("HumanoidRootPart")
+	local root: Part = char:WaitForChild("HumanoidRootPart")
 
 	if hum:GetAttribute("Stamina") <= 0 then return end --frankly, there's no situation where you can tech without stamina (sanity check)
 
@@ -213,6 +215,21 @@ local function registerMovement(player: Player, scope: string, mechanic: string,
 				sfx:Play()
 				sfx.Ended:Connect(function()
 					sfx:Destroy()
+				end)
+				
+				local pressure = RS.AttackVFX["All-Purpose Ring"]:Clone()
+				pressure.Parent = workspace
+				pressure.CFrame = root.CFrame
+				
+				local tweenSize = TS:Create(pressure, vfxInfo, {Size = pressure.Size * 8})
+				local tweenTp = TS:Create(pressure, vfxInfo, {Transparency = 1})
+				
+				tweenSize:Play()
+				tweenTp:Play()
+				tweenTp.Completed:Connect(function()
+					tweenSize:Destroy()
+					tweenTp:Destroy()
+					pressure:Destroy()
 				end)
 			elseif move == "AuxDash" then
 				if stamina < 2.5 then return end

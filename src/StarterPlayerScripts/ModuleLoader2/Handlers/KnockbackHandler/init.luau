@@ -64,7 +64,6 @@ function knockbackHandler:Affect(atktype: string, momentum: Vector3, targetRoot:
 			if object:IsA("LuaSourceContainer") then object:Destroy() end
 		end
 		
-		toggleCharacterModel(targetClone, "CanCollide", false)
 		toggleCharacterModel(targetChar, "Transparency", 1) --hides the real enemy model
 		
 		local cloneRoot: Part = targetClone:WaitForChild("HumanoidRootPart")

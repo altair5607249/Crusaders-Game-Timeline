@@ -1,8 +1,8 @@
 {
   "className": "Sound",
   "properties": {
-    "AudioContent": "rbxassetid://84172451666653",
     "Volume": 0.800000011920929,
+    "AudioContent": "rbxassetid://84172451666653",
     "RollOffMaxDistance": 100.0,
     "RollOffMode": "InverseTapered"
   }

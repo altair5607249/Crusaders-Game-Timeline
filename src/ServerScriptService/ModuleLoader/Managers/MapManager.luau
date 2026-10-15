@@ -19,8 +19,11 @@ local defaultSpawns = spawns.Winterness
 local maps = SS.Maps:GetChildren()
 local defaultMap = workspace.Winterness
 
-local notify = RS.Remotes.MapChange
+defaultMap:AddTag("ActiveLobby") --tracks the whether the lobby is in play
+
 local countdown = RS.Remotes.MapCountdown
+local notify = RS.Remotes.MapChange
+local volume = RS.Remotes.BGMVolume
 
 local mapInfo = {
 	["Cyberpunk City"] = "Animateria & InstantlyBread",
@@ -32,7 +35,8 @@ local mapInfo = {
 	["Parking Lot"] = "Nicholas3285 & MinecraftPro97k",
 	["Floating Castle"] = "J4milion & InstantlyBread",
 	Backrooms = "InstantlyBread & GreenHoldinItDown",
-	["Former School"] = "Brendan & RedManta LLC"
+	["Former School"] = "Brendan & RedManta LLC",
+	Town = "CorruptTypes"
 }
 
 local skyboxes = {
@@ -124,6 +128,15 @@ local skyboxes = {
 		Lf = "rbxasset://sky/null_plainsky512_lf.jpg",
 		Rt = "rbxasset://sky/null_plainsky512_rt.jpg",
 		Up = "rbxasset://sky/null_plainsky512_up.jpg",
+	},
+	
+	Town = {
+		Bk = "rbxasset://sky/null_plainsky512_bk.jpg",
+		Dn = "rbxasset://sky/null_plainsky512_dn.jpg",
+		Ft = "rbxasset://sky/null_plainsky512_ft.jpg",
+		Lf = "rbxasset://sky/null_plainsky512_lf.jpg",
+		Rt = "rbxasset://sky/null_plainsky512_rt.jpg",
+		Up = "rbxasset://sky/null_plainsky512_up.jpg",
 	}
 }
 
@@ -160,26 +173,13 @@ local tweenTime = 5
 local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 
 local function playSoundtrack(map: string, enabled: boolean)
-	local goal: number? = nil
 	local music: Sound = SNS[map].Sound
 
 	if enabled then --to enable
-		goal = 0.6
-		music.Playing = enabled
+		volume:FireAllClients(music, enabled)
 	else --to disable
-		goal = 0
-		task.delay(tweenTime, function()
-			music.Playing = enabled
-		end)
+		volume:FireAllClients(music, enabled)
 	end
-
-	local tweenMusic = TS:Create(music, tweenInfo, {Volume = goal})
-
-	tweenMusic:Play()
-
-	tweenMusic.Completed:Connect(function()
-		tweenMusic:Destroy()
-	end)
 end
 
 local function immortalizePlayers(players: {Player}, delayTime: number)
@@ -241,8 +241,13 @@ end
 Players.PlayerAdded:Connect(function(player)
 	if starting then return end
 
-	immortalizePlayers({player}, elapsed or bufferTime)
 	updateGUI(player, displayedMap, elapsed)
+	
+	if defaultMap:HasTag("ActiveLobby") then --prevents the attribution of inaccurate immortality timing to new players
+		immortalizePlayers({player}, elapsed or bufferTime) --for when the player joins during a lobby phase
+	else
+		immortalizePlayers({player}, 10) --for when the player joins during an active round
+	end
 end)
 
 controlSpawns(defaultSpawns, true)
@@ -293,7 +298,10 @@ end
 task.spawn(function()
 	while true do
 		if starting == false then
-			mapManager.Timer(changePeriod, false)
+			mapManager.Timer(changePeriod, false) --pauses the thread
+			
+			defaultMap:AddTag("ActiveLobby")
+			
 			controlSpawns(defaultSpawns, true)
 			reloadPlayers(60)
 
@@ -343,6 +351,7 @@ task.spawn(function()
 
 		mapManager.Timer(bufferTime, true) --allows players 60 seconds in the lobby
 		newClone:AddTag("ActiveMap")
+		defaultMap:RemoveTag("ActiveLobby")
 
 		setSkybox(newMap.Name)
 

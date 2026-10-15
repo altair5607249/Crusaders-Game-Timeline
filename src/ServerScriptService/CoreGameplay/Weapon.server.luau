@@ -31,9 +31,9 @@ Players.PlayerRemoving:Connect(function(player)
 end)
 
 local weaponCoords = {
-	Redd = CFrame.new(0, -1.2, 0.9) * CFrame.Angles(90, 0, 0),
+	Redd = CFrame.new(0, -1, 1) * CFrame.Angles(math.rad(90), 0, 0),
 	Yello = CFrame.new(0, 2.5, 0) * CFrame.Angles(0, 0, 0),
-	Gleen = CFrame.new(0, 0, 0) * CFrame.Angles(0, 0, 0),
+	Gleen = CFrame.new(0, 2.75, 1) * CFrame.Angles(math.rad(65), 0, 0),
 	Bluee = CFrame.new(0.65, 2, 0) * CFrame.Angles(math.rad(-90), math.rad(45), math.rad(90)),
 }
 

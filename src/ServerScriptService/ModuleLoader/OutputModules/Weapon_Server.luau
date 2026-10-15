@@ -5,8 +5,7 @@ local attack = remotes.Attack
 
 local WeaponManager = {}
 
-local managers = script.Parent
-local dmgManager = require(managers.DamageManager)
+local dmgManager = require(script.Parent.Parent.Managers.DamageManager)
 
 --default settings
 local CD = 2
@@ -15,7 +14,7 @@ local atk_rad = 4
 local atk_dur = 0.5
 
 function WeaponManager.Attack(weapon, ownerHum)
-	dmgManager.Damage(weapon.Handle, weapon, ownerHum, atk_dur, atk_rad, CD, dmg)
+	dmgManager:Damage(weapon.Handle, weapon, ownerHum, atk_dur, atk_rad, CD, dmg)
 end
 
 attack.OnServerEvent:Connect(function(player, weapon, ownerHum) --respond to remote event

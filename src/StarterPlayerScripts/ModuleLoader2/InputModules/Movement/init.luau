@@ -1,9 +1,7 @@
-local debby = game:GetService("Debris")
 local RS = game:GetService("ReplicatedStorage")
 local RNS = game:GetService("RunService")
 
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
+local player = game:GetService("Players").LocalPlayer
 
 local TS = game:GetService("TweenService")
 local currentCam = workspace.CurrentCamera
@@ -15,12 +13,7 @@ local animations = script:WaitForChild("Animations")
 local animsTable = animations:GetChildren()
 local animDispatch = {}
 
-local char = nil
-local root = nil
-local baseSpd = nil
-local runSpd = nil
-local hum = nil
-local animator = nil
+local char, root, baseSpd, runSpd, hum, animator = nil, nil, nil, nil, nil, nil
 
 local function onCharacterAdded()
 	char = player.Character or player.CharacterAdded:Wait()
@@ -45,50 +38,41 @@ end)
 
 local movement = {}
 
-local dashing = false
-local dashCD = 10
-local dashDB = false
+local dashing, frontDash, dashCD = false, false, 8
 
-function movement:Dash(dashDur: number, direction: Vector3, anim: Animation)
+function movement.Dash(dashDur: number, direction: Vector3, anim: Animation)
 	if not dashing then
 		dashing = true
 		
+		if direction == root.CFrame.LookVector then frontDash = true end
+		
 		animDispatch[anim]:Play()
 		
-		local x, d = 0, 100 --x should probably start at 0, but modify incase diff starting point desired
+		local x, d = 0, 95 --x should probably start at 0, but modify incase diff starting point desired
 		local b = math.sqrt(d)/dashDur
-		
-		local rootXZ = direction * Vector3.new(1, 0, 1)
-		local currentXZ = root.CFrame.LookVector * Vector3.new(1, 0, 1)
 			
 		local loop = nil
 		loop = RNS.RenderStepped:Connect(function(dt)
-			if rootXZ == currentXZ and not dashDB then --updates dash direction if forward dash is executed
-				dashDB = true
-			elseif dashDB then
-				direction = root.CFrame.LookVector
-			end
+			if frontDash == true then direction = root.CFrame.LookVector end
 			
-			local magnitude = -(b*x)^2 + d --so proud of the evolution of this
+			local magnitude = -(b*x)^2 + d --so proud of this equation's evolution
 			root.AssemblyLinearVelocity = direction * magnitude
 			
 			x += dt
 			if x >= dashDur then
 				animDispatch[anim]:Stop()
 				loop:Disconnect()
+				if frontDash == true then frontDash = false end
 			end
 		end)
 	task.delay(dashCD, function()
 		if hum == nil or hum.Health <= 0 then return end
 		dashing = false
-		dashDB = false
 	end)
 	end
 end
 
-local running = false
-
-function movement:Sprint(bool: boolean)
+function movement.Sprint(bool: boolean)
 	if bool then
 		fovUp:Play()
 		hum.WalkSpeed = runSpd
@@ -98,22 +82,24 @@ function movement:Sprint(bool: boolean)
 	end
 end
 
-local IASHandler = require(script.Parent:WaitForChild("IASHandler"))
+function movement.Parry() --this is gonna fun to program
+	
+end
+
+local IASHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.IASHandler)
 
 local movementSpecs = { --it's so peak... so clean..!
-	{name = "DashForward", callback = function() movement:Dash(0.75, root.CFrame.LookVector, animations.DashForward) end},
-	{name = "DashBackward", callback = function() movement:Dash(0.65, -root.CFrame.LookVector, animations.DashBackward) end},
-	{name = "DashRight", callback = function() movement:Dash(0.5, root.CFrame.RightVector, animations.DashRight) end},
-	{name = "DashLeft", callback = function() movement:Dash(0.5, -root.CFrame.RightVector, animations.DashLeft) end},
-	{name = "Sprint", callback = function(bool: boolean) movement:Sprint(bool) end}
+	{name = "DashForward", callback = function() movement.Dash(0.7, root.CFrame.LookVector, animations.DashForward) end},
+	{name = "DashBackward", callback = function() movement.Dash(0.3, -root.CFrame.LookVector, animations.DashBackward) end},
+	{name = "DashRight", callback = function() movement.Dash(0.3, root.CFrame.RightVector, animations.DashRight) end},
+	{name = "DashLeft", callback = function() movement.Dash(0.3, -root.CFrame.RightVector, animations.DashLeft) end},
+	{name = "Sprint", callback = function(bool: boolean) movement.Sprint(bool) end}
 }
 
 function movement.IAS()
-	local context = RS:WaitForChild("InputContexts"):WaitForChild("MovementContext")
+	local context = RS.InputContexts.MovementContext
 
 	IASHandler.ActReg(context, movementSpecs)
 end
-
-movement.IAS()
 
 return movement

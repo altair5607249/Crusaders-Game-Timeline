@@ -1,13 +1,23 @@
-local CollectionService = game:GetService("CollectionService")
-local RunService = game:GetService("RunService")
-local ServerScriptService = game:GetService("ServerScriptService")
+local outputMods = script.OutputModules
+local remotes = game:GetService("ReplicatedStorage").Remotes
+local attack = remotes.Attack
 
-for i, manager in script.Managers:GetChildren() do
-	local class = require(manager)
-	print(class)
+local atkContexts = {}
+
+for i, folder in ipairs(script:GetChildren()) do
+	for i, module in ipairs(folder:GetChildren()) do
+		local class = require(module)
+		if module.Parent == outputMods then atkContexts[module.Name] = class end
+	end
 end
 
+attack.OnServerEvent:Connect(function(player, atkContext: string, modifier: number)
+	atkContexts[atkContext].Action(player, modifier)
+end)
+
 --[[ reserved for the rpg :)
+local CollectionService = game:GetService("CollectionService")
+
 for i, module in script.Modules:GetChildren() do
 	local class = require(module)
 	

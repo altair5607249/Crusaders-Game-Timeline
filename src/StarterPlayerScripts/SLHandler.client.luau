@@ -1,14 +1,20 @@
---credit to LightningLion58's forum post regarding this!
+--credit to LightningLion58
 
 local UIS = game:GetService("UserInputService")
 local RNS = game:GetService("RunService")
 
-local player = game:GetService("Players").LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local hum = char:WaitForChild("Humanoid")
-local root = char:WaitForChild("HumanoidRootPart")
+local inputAction = game:GetService("ReplicatedStorage").AuxInputContexts.MouseStateContext.MouseLock
+local active = false
 
-function shiftLock(active)
+local function shiftLock()
+	local player = game:GetService("Players").LocalPlayer
+	local char = player.Character or player.CharacterAdded:Wait()
+	local hum = char:WaitForChild("Humanoid")
+	local root = char:FindFirstChild("HumanoidRootPart")
+	
+	if not active then active = true
+	else active = false end
+	
 	if active then
 		hum.CameraOffset = Vector3.new(1.75, 0, 0)
 		hum.AutoRotate = false
@@ -27,4 +33,4 @@ function shiftLock(active)
 	end
 end
 
-shiftLock(true)
+inputAction.Pressed:Connect(shiftLock)

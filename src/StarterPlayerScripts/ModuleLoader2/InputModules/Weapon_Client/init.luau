@@ -1,4 +1,4 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RS = game:GetService("ReplicatedStorage")
 
 local Weapon = {}
 Weapon.__index = Weapon
@@ -62,7 +62,7 @@ function Weapon:Attack()
 	
 	self.attacking = true
 	
-	ReplicatedStorage.Remotes.Attack:FireServer() 
+	RS.Remotes.Attack:FireServer() 
 	
 	local animName = weapons[self.tool.Name]
 	if animName then
@@ -78,6 +78,22 @@ function Weapon:LoadAnimations()
 		animations[anim.Name] = self.animator:LoadAnimation(anim)
 	end
 	return animations
+end
+
+function Weapon.Placeholder()
+	print("WeaponStyle Move 1")
+end
+
+local IASHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.IASHandler)
+
+local weaponSpecs = { --it's so peak... so clean..!
+	{name = "Move1", callback = function() Weapon.Placeholder() end}
+}
+
+function Weapon.IAS()
+	local context = RS.InputContexts.WeaponContext
+
+	IASHandler.ActReg(context, weaponSpecs)
 end
 
 return Weapon

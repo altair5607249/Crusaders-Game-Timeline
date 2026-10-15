@@ -32,12 +32,8 @@ remotes.ToggleStun.OnClientEvent:Connect(function(atktype: string, duration: num
 	stun:Toggle(atktype, duration)
 end)
 
-remotes.ToggleDash.OnClientEvent:Connect(function(duration, direction, anim, specialCase)
-	movement.Dash(duration, direction, anim, specialCase)
-end)
-
-remotes.Knockback.OnClientEvent:Connect(function(attackData: {Instance}, targetRoot: Part)
-	kb.Casing(attackData, targetRoot)
+remotes.Knockback.OnClientEvent:Connect(function(atktype: string, momentum: Vector3, targetRoot: Part)
+	kb.Casing(atktype, momentum, targetRoot)
 end)
 
 --[[reserved for the rpg :)

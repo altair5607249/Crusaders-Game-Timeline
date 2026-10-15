@@ -44,7 +44,7 @@ function m1Manager.Action(player: Player, index: number)
 	end
 
 	m1Registry[player].prevCount = count
-	m1Registry[player].prevTick = tick()
+	m1Registry[player].prevTick = os.clock()
 	cooldown:Register(player, "M1", index)
 	
 	local crusader = player:GetAttribute("Crusader")
@@ -59,7 +59,7 @@ function m1Manager.Action(player: Player, index: number)
 	local attackData = {
 		atkdur = 0.2,
 		atkrad = 3.5,
-		atktype = (index == 4 and "medium") or "light", --see stun manager for time references
+		atktype = (index == 4 and "heavy") or "light", --see stun manager for time references
 		bdmg = dmg,
 		dmg = dmg + 0.5*(index-1)^2, --dmg calculations (parabolic curve)
 		ID = index,

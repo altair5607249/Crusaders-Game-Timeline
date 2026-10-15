@@ -1,6 +1,9 @@
+local RS = game:GetService("ReplicatedStorage")
 local SSS = game:GetService("ServerScriptService")
-local managers = SSS.ModuleLoader.Managers
-local damager = require(managers.DamageManager)
+
+local timing = require(RS.UniversalModules.Time)
+
+local damager = require(SSS.ModuleLoader.Managers.DamageManager)
 
 local RM1 = {}
 
@@ -11,17 +14,20 @@ function RM1:Trigger(player: Player)
 	local hum = char:WaitForChild("Humanoid")
 	
 	local dmg = 35
+	local duration = timing.GetValue("Redd", "Bare", 3, 1) - timing.GetValue("Redd", "Bare", 1, 1)
 	
 	local maxHealth = hum.MaxHealth
 	local currentHealth = hum.Health
 	local health = maxHealth - currentHealth
 	
 	local attackData = {
-		atkdur = 0.5,
+		atkdur = duration,
 		atkrad = 4,
 		atktype = "medium",
 		bdmg = dmg,
-		dmg = dmg + health^2/(8*maxHealth)
+		dmg = dmg + health^2/(8*maxHealth),
+		ID = 1,
+		style = "Bare"
 	}
 	
 	print(attackData.dmg)

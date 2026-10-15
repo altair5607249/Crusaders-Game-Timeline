@@ -7,16 +7,9 @@ local RM2 = {}
 function RM2:Trigger(player: Player)
 	print("rm2")
 	
-	print(player:HasTag("CancellingMove"))
-	
-	if player:HasTag("CancellingMove") then 
-		print("detected")
-		player:RemoveTag("CancellingMove") 
-		return 
-	end
-	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum = char:WaitForChild("Humanoid")
+	local rightArm = char:WaitForChild("Right Arm")
 	
 	local dmg = 25
 	local shockwaveDmg = 10
@@ -31,8 +24,27 @@ function RM2:Trigger(player: Player)
 		atkrad = 4,
 		atktype = "heavy",
 		bdmg = dmg,
-		dmg = dmg + health^2/(8*maxHealth)
+		dmg = dmg + health^2/(8*maxHealth),
+		ID = 2,
+		style = "Bare"
 	}
+	
+	--calibrate effects
+	local hitPart = char:WaitForChild("hitPart")
+	
+	local vfx = Instance.new("Explosion")
+	vfx.ExplosionType = Enum.ExplosionType.NoCraters
+	vfx.BlastPressure = 0 --this is purely cosmetic
+	vfx.BlastRadius = 50
+	vfx.Position = (hitPart.CFrame * CFrame.new(0, 0, -attackData.atkrad*2)).Position
+	
+	--for glowing arm
+	local glow = Instance.new("PointLight")
+	glow.Brightness = 8
+	glow.Color = Color3.new(1, 0, 0)
+	glow.Range = 10
+	glow.Shadows = false
+	glow.Parent = rightArm
 	
 	damager:Damage(player, attackData) --main hit
 	
@@ -42,11 +54,17 @@ function RM2:Trigger(player: Player)
 		atktype = "light",
 		bdmg = shockwaveDmg,
 		dmg = shockwaveDmg + health^2/(20*maxHealth),
+		ID = 2,
 		shockwave = 0.5
 	}
 	
 	task.delay(delayTime, function()
+		vfx.Parent = workspace --ekkuSPLOOOSION
 		damager:Damage(player, attackData2) --shockwave
+		glow:Destroy()
+		vfx.AncestryChanged:Connect(function()
+			vfx:Destroy()
+		end)
 	end)
 end
 

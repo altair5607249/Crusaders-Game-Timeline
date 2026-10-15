@@ -17,7 +17,7 @@ end)
 local cooldown = {}
 
 function cooldown:Register(player: Player, move: string, ID: number)
-	cdRegistry[player][move] = {tick(), ID} 
+	cdRegistry[player][move] = {os.clock(), ID} 
 end
 
 function cooldown:IsReady(player: Player, move: string, style: string)

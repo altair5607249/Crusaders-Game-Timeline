@@ -18,8 +18,8 @@ local animations = script:WaitForChild("Animations")
 local animsTable = animations:GetChildren()
 local animDispatch = {}
 
-local crusader, char, root, baseSpd, runSpd, hum, animator = nil, nil, nil, nil, nil, nil
-local dashing, frontDash, dashCD = nil, nil, nil
+local crusader, char, root, baseSpd, runSpd, hum, animator
+local dashRegistry, frontDash
 
 local function onCharacterChanged()
 	crusader = player:GetAttribute("Crusader")
@@ -30,7 +30,11 @@ local function onCharacterChanged()
 	hum = char:WaitForChild("Humanoid")
 	animator = hum:WaitForChild("Animator")
 	
-	dashing, frontDash, dashCD = false, false, 8
+	dashRegistry ={
+		FrontDash = 0,
+		AuxDash = 0
+	}
+	frontDash = false
 
 	for i, anim in pairs(animsTable) do
 		local animTrack = animator:LoadAnimation(anim)
@@ -44,21 +48,20 @@ end)
 
 local movement = {}
 
-local dashRegistry = {0, 0}
-
 local dashSpecs = {
-	DashForward = 1,
-	DashBackward = 2,
-	DashRight = 2,
-	DashLeft = 2
+	DashForward = {"FrontDash", 1},
+	DashBackward = {"AuxDash", 2},
+	DashRight = {"AuxDash", 2},
+	DashLeft = {"AuxDash", 2}
 }
 
 function movement.Dash(dashDur: number, direction: Vector3, anim: Animation)
-	local constraint = timing.GetValue(crusader, "Tech", 2, dashSpecs[anim.Name])
-	if timing.CheckConstraint(dashRegistry[dashSpecs[anim.Name]], constraint) or stunHandler:GetStunState() then return end
+	local name = dashSpecs[anim.Name][1]
+	local constraint = timing.GetValue(crusader, "Tech", 2, dashSpecs[anim.Name][2])
+	if timing.CheckConstraint(dashRegistry[name], constraint) or stunHandler:GetStunState() then return end
 		
 	RS.Remotes.MovementTrigger:FireServer("dashSpecs", anim.Name)
-	dashRegistry[dashSpecs[anim.Name]] = os.clock()
+	dashRegistry[name] = os.clock()
 		
 	if direction == root.CFrame.LookVector then frontDash = true end
 		

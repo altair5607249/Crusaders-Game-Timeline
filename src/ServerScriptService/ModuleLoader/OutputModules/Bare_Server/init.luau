@@ -29,6 +29,10 @@ local namespace = {
 local bareManager = {}
 
 function bareManager.Action(player: Player, move: number, copiedCrusader: string)
+	local char = player.Character or player.CharacterAdded:Wait()
+	
+	if char:HasTag("RagdollActive") then return end
+	
 	local crusader = player:GetAttribute("Crusader")
 	local copycat = false
 	
@@ -49,18 +53,17 @@ function bareManager.Action(player: Player, move: number, copiedCrusader: string
 		if not cooldown:IsReady(player, moveName, "Bare") then return end
 		cooldown:Register(player, moveName, move)
 	end
-	
-	print("Server-side confirmation")
 		
 	local delayTime = timing.GetValue(crusader, "Bare", 1, move)
-	local duration = timing.GetValue(crusader, "Bare", 3, move)
+	local duration = timing.GetValue(crusader, "Bare", 3, move) - delayTime
 	
-	player:AddTag("LoadingAttack")
-	print(player:HasTag("CancellingMove"))
+	char:AddTag("LoadingAttack")
 	task.delay(delayTime, function()
-		print(player:HasTag("CancellingMove"))
-		player:RemoveTag("LoadingAttack")
-		print(player:HasTag("CancellingMove"))
+		char:RemoveTag("LoadingAttack")
+		if char:HasTag("CancellingAttack") then
+			char:RemoveTag("CancellingAttack")
+			return
+		end
 		stunManager.Eval(player, nil, duration, "Recovery") --recovery frames/anim commitment
 		characters[crusader][move]:Trigger(player)
 	end)

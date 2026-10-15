@@ -1,4 +1,4 @@
---this script holds a special place of hatred within my heart
+--meant to be kind to/tolerant of laggy players
 
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
@@ -11,8 +11,11 @@ local stunManager = require(SSS.ModuleLoader.Managers.StunManager)
 local spacing = require(RS.UniversalModules.Space)
 local timing = require(RS.UniversalModules.Time)
 
-local padding = 8 --for network jitter, packet burstiness, physics interpolation, etc.
+local dashChecks = 8
+local minPeriod = 0.05
 local period = 0.1 --how often the anticheat checks movement (in seconds)
+local paddingFreq = 60 --to be scaled with the periodic cycle, since padding adds flat rates
+local padding = paddingFreq * period --for network jitter, packet burstiness, physics interpolation, etc.
 
 local movementSpecs = {
 	dashSpecs = {
@@ -33,11 +36,12 @@ type TokenStructure = {timeCredit: number, maxCredit: number}
 
 local function maxWalkDistance(player: Player, elapsed: number, latency: number, tokenData: TokenStructure)
 	local crusader = player:GetAttribute("Crusader")
-	local walkSpeed: number = (player:HasTag("Running") and spacing.GetValue(crusader, 2)) or spacing.GetValue(crusader, 1)
+	local char = player.Character or player.CharacterAdded:Wait()
+	local walkSpeed: number = (char:HasTag("Running") and spacing.GetValue(crusader, 2)) or spacing.GetValue(crusader, 1)
 	
 	tokenData.timeCredit = math.min(tokenData.maxCredit, tokenData.timeCredit + elapsed)
 	
-	local distance = (walkSpeed * tokenData.timeCredit) + padding
+	local distance = (walkSpeed * tokenData.timeCredit) + padding/4
 	
 	return distance, walkSpeed
 end
@@ -47,8 +51,13 @@ local function dashDisplacement(b: number, d: number, x: number)
 end
 
 local function maxDashDistance(player: Player, elapsed: number, latency: number)
+	local lastFrontDash, lastAuxDash = player:GetAttribute("LastFrontDash"), player:GetAttribute("LastAuxDash")
+	local lastFDCheck, lastADCheck = player:GetAttribute("LastFrontDashCheck"), player:GetAttribute("LastAuxDashCheck")
+	
+	local initialTime = ((lastFrontDash or -1) > (lastAuxDash or -1) and lastFrontDash) or lastAuxDash --high-brow ternary operator shortcut
+	local check = ((lastFDCheck or -1) > (lastADCheck or -1) and lastFDCheck) or lastADCheck
+	
 	local dashDur = player:GetAttribute("DashActive")
-	local initialTime = player:GetAttribute("LastDash")
 	local d = 95
 	local b = math.sqrt(d)/dashDur
 	
@@ -56,21 +65,26 @@ local function maxDashDistance(player: Player, elapsed: number, latency: number)
 	
 	local maxServerWindow = dashDur + latency
 	
-	local xPrev = math.clamp((player:GetAttribute("LastDashCheck") or initialTime) - initialTime, 0, maxServerWindow)
+	local xPrev = math.clamp((check or initialTime) - initialTime, 0, maxServerWindow)
 	local xNow = math.clamp(finalTime - initialTime, 0, maxServerWindow)
 	local curveXPrev = math.clamp(xPrev, 0, dashDur)
 	local curveXNow = math.clamp(xNow, 0, dashDur)
 	
-	player:SetAttribute("LastDashCheck", finalTime)
+	if initialTime == lastFrontDash then 
+		player:SetAttribute("LastFrontDashCheck", finalTime)
+	else
+		player:SetAttribute("LastAuxDashCheck", finalTime)
+	end
 	
 	local curveDisplacement = dashDisplacement(b, d, curveXNow) - dashDisplacement(b, d, curveXPrev)
 	
-	--allow overflowing walk-induced displacement, just in case the server timeline overextended
+	--allow overflowing walk-induced displacement, just in case the server timeline overextends
 	local overflowTime = math.max(0, xNow - curveXNow) - math.max(0, xPrev - curveXPrev)
 	local overflowDisplacement = 0
 	if overflowTime > 0 then
 		local crusader = player:GetAttribute("Crusader")
-		local walkSpeed = (player:HasTag("Running") and spacing.GetValue(crusader, 2)) or spacing.GetValue(crusader, 1)
+		local char = player.Character or player.CharacterAdded:Wait()
+		local walkSpeed = (char:HasTag("Running") and spacing.GetValue(crusader, 2)) or spacing.GetValue(crusader, 1)
 		overflowDisplacement = (walkSpeed * overflowTime) + padding
 	end
 	
@@ -85,10 +99,13 @@ local function validateMovement(player: Player, char: Model, tokenData: TokenStr
 	local duration = 0
 	local loop
 	loop = RNS.PreSimulation:Connect(function(dt)
-		if player:HasTag("RagdollActive") then return end
+		if char:HasTag("RagdollActive") then return end
+		
+		local currentPeriod = period
+		if player:GetAttribute("DashActive") then currentPeriod = math.max(player:GetAttribute("DashActive") / dashChecks, minPeriod) end
 		
 		duration += dt
-		if duration < period then return end
+		if duration < currentPeriod then return end
 
 		local elapsed = duration
 		duration = 0
@@ -107,12 +124,16 @@ local function validateMovement(player: Player, char: Model, tokenData: TokenStr
 		--basic selection tree for movement mode
 		if player:GetAttribute("DashActive") then
 			maxDistance = maxDashDistance(player, elapsed, latency)
+			
+			if char:HasTag("LoadingAttack") and not char:HasTag("CancellingAttack") then
+				char:AddTag("CancellingAttack")
+			end
 		else --which is calculated with, by default, walking
 			maxDistance, maxSpeed = maxWalkDistance(player, elapsed, latency, tokenData)
 		end
 		
 		if distance > maxDistance then --illegal movement
-			warn("Movement anticheat triggered by", player.Name .. "!")
+			warn("Movement anticheat triggered by", player.Name .. "! Distance:", distance, "Max Distance:", maxDistance)
 			root.CFrame = CFrame.new(lastServerPos.X, root.Position.Y, lastServerPos.Z) * (root.CFrame - root.Position)
 			root.AssemblyLinearVelocity = Vector3.zero
 			root.AssemblyAngularVelocity = Vector3.zero
@@ -133,6 +154,7 @@ local function registerMovement(player: Player, scope: string, mechanic: string,
 	local move, ID, duration = nil, nil, nil
 	local movementState = movementSpecs[scope][mechanic][3]
 	local crusader = player:GetAttribute("Crusader")
+	local char = player.Character or player.CharacterAdded:Wait()
 	
 	if movementState ~= "SprintActive" then
 		move = movementSpecs[scope][mechanic][1]
@@ -140,22 +162,34 @@ local function registerMovement(player: Player, scope: string, mechanic: string,
 		
 		if not cooldownManager:IsReady(player, move, "Tech") or player:GetAttribute("Stunned") then return end
 		
-		duration = timing.GetValue(crusader, "Tech", 3, ID)
+		if movementState == "DashActive" then 
+			if move == "FrontDash" then 
+				char:AddTag("Dashing")
+				player:SetAttribute("LastFrontDash", os.clock())
+			elseif move == "AuxDash" then
+				char:AddTag("Dashing")
+				player:SetAttribute("LastAuxDash", os.clock())
+			else
+				warn("Invalid dash type from", player.Name .. "!")
+			end
+		end
 		
+		duration = timing.GetValue(crusader, "Tech", 3, ID)
 		stunManager.Eval(player, nil, duration, "Recovery")
 		cooldownManager:Register(player, move, ID)
 		player:SetAttribute(movementState, duration)
-		if movementState == "DashActive" then player:SetAttribute("LastDash", os.clock()) end
 		
-		task.delay(duration, function()
+		local gracePeriod = 4*(if player:GetAttribute("DashActive") then player:GetAttribute("DashActive") else 0)/ dashChecks
+		task.delay(duration + gracePeriod, function()
 			if player.Parent ~= Players then return end
+			if char:HasTag("Dashing") then char:RemoveTag("Dashing") end
 			player:SetAttribute(movementState, nil)
 		end)
 	else
 		if switch then
-			player:AddTag("Running")
+			char:AddTag("Running")
 		else
-			player:RemoveTag("Running")
+			char:RemoveTag("Running")
 		end
 	end
 end
@@ -168,10 +202,12 @@ Players.PlayerAdded:Connect(function(player)
 		}
 		validateMovement(player, char, tokenRegistry[player])
 	end)
-	player.CharacterRemoving:Connect(function(char) --optimize this code later if possible
+	player.CharacterRemoving:Connect(function(char) --change these to character-level attributes
 		player:SetAttribute("DashActive", nil)
-		player:SetAttribute("LastDash", nil)
-		player:SetAttribute("LastDashCheck", nil)
+		player:SetAttribute("LastFrontDash", nil)
+		player:SetAttribute("LastAuxDash", nil)
+		player:SetAttribute("LastFrontDashCheck", nil)
+		player:SetAttribute("LastAuxDashCheck", nil)
 	end)
 end)
 

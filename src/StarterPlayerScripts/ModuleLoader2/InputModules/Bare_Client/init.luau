@@ -42,12 +42,25 @@ function bareStyle.Input(move: number)
 	local constraint = timing.GetValue(crusader, "Bare", 2, move)
 	if timing.CheckConstraint(bareRegistry[move], constraint) or stunHandler:GetStunState() then return end
 	
-	print("Client-side confirmation")
+	local delayTime = timing.GetValue(crusader, "Bare", 1, move)
 	local animTrack = animTracks[move]
 	animTrack:Play()
 	attack:FireServer("Bare_Server", move)
 	
-	bareRegistry[move] = tick()
+	bareRegistry[move] = os.clock()
+	
+	task.delay(delayTime, function()
+		if char:HasTag("CancellingAttack") then animTrack:Stop() end
+	end)
+	
+	local fullAnim = timing.GetValue(crusader, "Bare", 3, move)
+	local continuation: boolean = timing.GetValue(crusader, "Bare", 5, move)
+	if continuation then
+		task.delay(fullAnim, function()
+			print("Animation ending!")
+			if not char:HasTag("Continue") then animTrack:Stop() end
+		end)
+	end
 end
 
 function bareStyle.SwitchToWeapon()

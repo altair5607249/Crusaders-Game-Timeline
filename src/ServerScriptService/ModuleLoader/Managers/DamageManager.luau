@@ -11,6 +11,13 @@ local spacing = require(RS.UniversalModules.Space)
 local stun = require(script.Parent.StunManager)
 local kb = require(script.Parent.KnockbackManager)
 
+local vfxQuirks = {
+	Redd = Color3.new(1, 0, 0),
+	Yello = Color3.new(1, 1, 0),
+	Gleen = Color3.new(0, 1, 0),
+	Bluee = Color3.new(0, 0, 1)
+}
+
 local DamageManager = {}
 
 function DamageManager:Damage(player: Player, attributes: {Instance})
@@ -21,7 +28,7 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 	
 	local root = char:WaitForChild("HumanoidRootPart")
 	local hum = char:WaitForChild("Humanoid")
-	local origin = attributes["origin"] or char:WaitForChild("hitPart", 2)
+	local origin: Part = attributes["origin"] or char:WaitForChild("hitPart", 2)
 
 	if hum == nil or hum.Health <= 0 then return end
 
@@ -29,7 +36,7 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 	
 	local characterList = CS:GetTagged("Character")
 	local filtered = {}
-	for i, c in characterList do
+	for i, c in ipairs(characterList) do
 		if c ~= char then
 			table.insert(filtered, c)
 		end
@@ -42,10 +49,16 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 	local center
 	local oldOrigin
 	
+	--various sub-attack types
 	if attributes["shockwave"] then
 		oldOrigin = origin
 		origin = oldOrigin:Clone()
 		origin.CFrame = oldOrigin.CFrame * CFrame.new(0, 0, -attributes["atkrad"]/2)
+	end
+	
+	local bind
+	if attributes["getTargets"] then
+		bind = Instance.new("BindableEvent")
 	end
 	
 	local loop
@@ -55,12 +68,14 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 			loop:Disconnect()
 			table.clear(targets)
 			if attributes["shockwave"] then origin:Destroy() end
-			return
+			if attributes["getTargets"] then bind:Fire(nil) end
+			return --ends current frame too
 		end
 		
 		if attributes["expanding"] then attributes["atkrad"] *= attributes["expanding"]^dt end
 		
-		center = origin.CFrame
+		center = (typeof(origin) == "CFrame" and origin) or origin.CFrame
+		
 		local hits = workspace:GetPartBoundsInBox(center, Vector3.new(attributes["atkrad"], attributes["atkrad"], attributes["atkrad"]), params)
 		for i, part in hits do
 			local targetChar = part:FindFirstAncestorOfClass("Model")
@@ -73,7 +88,7 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 			local targetHum = targetChar:FindFirstChild("Humanoid")
 			if not targetHum or targetHum.Health <= 0 or targetHum == hum then continue end
 			
-			if targetHum:GetAttribute("Immortal") then continue end
+			if targetHum:HasTag("Immortal") then continue end --for i-frames
 			
 			if attributes["shockwave"] ~= nil then
 				local direction = (targetRoot.Position - oldOrigin.Position).Unit
@@ -86,51 +101,71 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 				if not attributes["DOT"] then table.insert(targets, targetHum) end --for damage-over-time attacks
 				
 				targetHum:TakeDamage(attributes["dmg"]) --most important line obviously
-				print("Damage frame!")
+				
+				if attributes["oneHit"] then
+					duration = attributes["atkdur"]
+					char:AddTag("HitFinished")
+				end
 				
 				if attributes["DOT"] then 
-					targetHum:SetAttribute("Immortal", true) --i-frames for DOT; we're not adding Sans-level mechanics here
+					targetHum:AddTag("Immortal") --i-frames for DOT; we're not adding Sans-level mechanics here
 					task.delay(attributes["DOT"], function()
-						targetHum:SetAttribute("Immortal", nil)
+						targetHum:RemoveTag("Immortal")
 					end)
 				end
 				
-				if targetHum == nil or targetHum.Health <= 0 then continue end
+				if not targetHum or targetHum.Health <= 0 then continue end
 				if targetChar:HasTag("Resistance") then continue end --available during rush-style and ult attacks
 				
-				if attributes["shockwave"] == nil then stun:DurReg(targetPlr, attributes["atktype"], attributes["style"], attributes["ID"], "Hit") end --hitstun
-				if not attributes["expanding"] then 
-					kb.Eval(player, targetPlr, targetRoot, attributes) 
-				end --knockback
+				if not attributes["precedent"] then
+					if not attributes["shockwave"] then 
+						stun:DurReg(player, targetPlr, attributes["atktype"], attributes["style"], attributes["ID"], "Hit") --hitstun 
+					end
+					
+					if not attributes["expanding"] then 
+						kb.Eval(player, targetPlr, targetRoot, attributes["atktype"]) --knockback
+					end
+				end
 			end
 		end
 
 		--debug visualization (make optional later)
 		local testPart = Instance.new("Part")
 		testPart.Shape = Enum.PartType.Block
-		testPart.Color = Color3.new(1, 0, 0)
-		testPart.Transparency = 0.92
 		testPart.Anchored = true
-		testPart.CFrame = origin.CFrame
+		testPart.CastShadow = false
+		testPart.Color = vfxQuirks[player:GetAttribute("Crusader")]
+		testPart.CFrame = (typeof(origin) == "CFrame" and origin) or origin.CFrame
 		local size = attributes["atkrad"]
 		testPart.Size = Vector3.new(size, size, size)
 		testPart.CanCollide = false
 		testPart.CanQuery = false
+		testPart.Transparency = 0.94
 		testPart.Parent = workspace
 
 		if testPart == nil then
-			warn("test part is nil")
+			warn("Hitbox is nil!")
 		end
 
-		game.Debris:AddItem(testPart, 0.3)
+		debby:AddItem(testPart, 0.3)
 
 		duration += dt
 		if duration >= attributes["atkdur"] then
 			loop:Disconnect()
-			table.clear(targets)
 			if attributes["shockwave"] then origin:Destroy() end
+			if attributes["getTargets"] then 
+				local clonedTargets = table.clone(targets)
+				bind:Fire(clonedTargets)
+			end
+			table.clear(targets)
 		end
 	end)
+	
+	if attributes["getTargets"] then
+		local clonedTargets = bind.Event:Wait()
+		bind:Destroy()
+		return clonedTargets
+	end
 end
 
 return DamageManager

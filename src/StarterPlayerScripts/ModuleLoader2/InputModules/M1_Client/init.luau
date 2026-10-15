@@ -48,7 +48,7 @@ function m1.Click()
 
 		local index = count
 		m1:Attack(index)
-		prevInput = tick()
+		prevInput = os.clock()
 	end
 end
 

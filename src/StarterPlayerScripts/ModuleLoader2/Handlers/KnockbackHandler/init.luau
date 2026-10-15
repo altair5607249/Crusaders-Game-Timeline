@@ -32,7 +32,7 @@ local animSpecs = {
 
 local function toggleCharacterModel(character: Model, property: string, modifier: any)
 	for i, object in ipairs(character:GetDescendants()) do
-		if object.Name == "HumanoidRootPart" or object.Name == "Handle" or object.Name == "hitPart" then continue end
+		if object.Name == "HumanoidRootPart" or object.Name == "hitPart" then continue end
 		if object:IsA("BasePart") or object:IsA("Decal") then
 			local hasProperty, _ = pcall(function() local test = object[property] end)
 			if hasProperty and not object:FindFirstChild(property) then 
@@ -80,12 +80,16 @@ function knockbackHandler:Affect(momentum: Vector3, targetRoot: Part)
 		end)
 		
 		task.spawn(function()
-			repeat task.wait() until not targetChar:HasTag("RagdollActive")
-			
+			repeat 
+				task.wait() 
+			until not targetChar.Parent or not targetChar:HasTag("RagdollActive")
+
 			if loop then loop:Disconnect() end
-			
-			targetClone:Destroy()
-			toggleCharacterModel(targetChar, "Transparency", 0) --brings back the real enemy model
+			if targetClone then targetClone:Destroy() end
+
+			if targetChar.Parent then
+				toggleCharacterModel(targetChar, "Transparency", 0) --brings back the real enemy model
+			end
 		end)
 	else
 		root:ApplyImpulse(momentum)

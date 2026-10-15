@@ -27,9 +27,6 @@ function stunManager.Eval(player: Player, atktype: string, duration: number, sou
 		
 		char:SetAttribute("Stunned", true)
 		char:SetAttribute("StunTime", duration)
-
-		local hum: Humanoid = char:FindFirstChild("Humanoid")
-		hum.WalkSpeed = 0
 	else
 		if char:GetAttribute("StunTime") > 4 then return end --stun time is capped :)
 		duration += char:GetAttribute("StunTime")
@@ -43,6 +40,11 @@ function stunManager.Eval(player: Player, atktype: string, duration: number, sou
 	
 	if not char:GetAttribute("StunExt") then
 		char:SetAttribute("StunExt", true)
+		
+		local savedSpeed: number? = nil
+		if char:HasTag("ConserveSpeed") then savedSpeed = hum.WalkSpeed end
+		
+		hum.WalkSpeed = 0
 
 		local initialStun = os.clock()
 
@@ -59,13 +61,20 @@ function stunManager.Eval(player: Player, atktype: string, duration: number, sou
 			char:SetAttribute("StunSource", nil)
 			char:SetAttribute("StunType", nil)
 			char:SetAttribute("StunStart", nil)
-			hum.WalkSpeed = spacing.GetValue(crusader, 1)
+			
+			if char:HasTag("ConserveSpeed") then
+				hum.WalkSpeed = savedSpeed
+				char:AddTag("Running")
+			else
+				hum.WalkSpeed = spacing.GetValue(crusader, 1)
+			end 
 		end)
 	end
 
 	if not char:GetAttribute("StunStart") then --makes sure of legitimate pairing
 		char:SetAttribute("StunStart", true)
 		toggle:FireClient(player, atktype, true)
+		if char:HasTag("Running") then char:RemoveTag("Running") end
 	end
 end
 

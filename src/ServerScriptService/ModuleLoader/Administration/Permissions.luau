@@ -7,16 +7,35 @@ local sender = RS.Remotes.Admin
 local adminRegistry = {
 	Regulators = {
 		Magnitude = 8, --this indicates the level of authority one possesses
-		Eudaimonic = {1686067617, 1147951417},
+		Eudaimonic = {
+			[1686067617] = {"Avyā B. Elyssium L., the Last Human,", "<font color ='#000000'>%s</font>"}, 
+			[1147951417] = {"Veryn, the Wonder,", "<font color ='#888888'>%s</font>"}
+		},
 	},
 	Principalities = {
 		Magnitude = 7,
-		Crusader = {4881419387, 8780962510, 733050969, 7504271088, 5593365425, 2942231469},
-		Transcendant = {2528328358, 306366365, 3570093153, 474688120, 2057014980, 1036700937},
+		Crusader = { --crude, contemporary aliases
+			[4881419387] = {"Aidalon, the Most Incompetent God,", "<font color ='#FF0000'>%s</font>"}, 
+			[8780962510] = {"Xæon, the Knight of Twilight,", "<font color ='#FF8000'>%s</font>"}, 
+			[733050969] = {"Ethandros, the First Drifter,", "<font color ='#FFFF00'>%s</font>"}, 
+			[7504271088] = {"Zakyros, the Fractal Fabricator,", "<font color ='#00FF00'>%s</font>"}, 
+			[5593365425] = {"Gabrius, the Stellar Liberator,", "<font color ='#0000FF'>%s</font>"}, 
+			[2942231469] = {"Koleon, the Lord of the Federation,", "<font color ='#FF00FF'>%s</font>"}
+		},
+		Transcendant = {
+			[2528328358] = {"Krimson, the Hidden Menace,", "<font color ='#FF000F'>%s</font>"}, --Aidalon's isolated rage
+			[306366365] = {"Knox, the Alter Ego,", "<font color ='#00FF00'>%s</font>"}, --Zakyros's alter ego
+			[3570093153] = {"Sage, the Earth Standing,", "<font color ='#B2AC88'>%s</font>"}, --Zakyros's wife (Askafroa)
+			[474688120] = {"Jazz, the Jewel,", "<font color ='#FF0000'>%s</font>"}, --ancient creature of the Abyss, friend of Avyā
+			[2057014980] = {"Yochanan, the Merry Minstrel,", "<font color ='#825825'>%s</font>"},
+			[1036700937] = {"Lord F-150, the Symphony of Syzygy,", "<font color ='#0088FF'>%s</font>"}
+		},
 	},
 	Redeemers = {
 		Magnitude = 6,
-		Wonder = {},
+		Wonder = {
+			[1631980288] = {"Ryushi Akuseru, the Wonder of What Matters,", "<font color ='#FF69B4'>%s</font>"}
+		},
 		Reverend = {},
 		Vindicator = {},
 		Agonist = {}
@@ -25,26 +44,16 @@ local adminRegistry = {
 	["Greater Regalia"] = {
 		Magnitude = 5,
 		Regent = {},
-		Sovereign = {1631980288},
+		Sovereign = {},
 	},
 	["Lesser Regalia"] = {
 		Magnitude = 4,
 		Suzerain = {},
 		Mediator = {},
-		Visionary = {1198289487}
+		Visionary = {
+			[1198289487] = {"Adelheid", "<font color ='#FF00FF'>%s</font>"}
+		}
 	},
-	
-}
-
-local titleQuirks = {
-	Crusader = {
-		[4881419387] = "<font color ='#FF0000'>%s</font>",
-		[8780962510] = "<font color ='#FF8000'>%s</font>",
-		[733050969] = "<font color ='#FFFF00'>%s</font>",
-		[7504271088] = "<font color ='#00FF00'>%s</font>",
-		[5593365425] = "<font color ='#0000FF'>%s</font>",
-		[2942231469] = "<font color ='#FF00FF'>%s</font>",
-	}
 }
 
 --note: the category details the level of permission, while the subcategory details the aesthetics behind that permission
@@ -61,12 +70,18 @@ end)
 
 local adminPerms = {}
 
+type adminInfo = {epithet: string, ink: string}
+
 Players.PlayerAdded:Connect(function(player)
-	local result: boolean, title: string, clearance: number = adminPerms:GetPerms(player, true)
+	local rank: string, title: string, clearance: number = adminPerms:GetPerms(player, true)
 	
-	if result then
-		local message: string = title .. " " .. player.Name .. " has entered the Headspace!"
-		local quirk: string | string = titleQuirks[title][player.UserId] or "<font color ='#FF0000'>%s</font>"
+	if rank then
+		local specs: adminInfo = adminRegistry[rank][title][player.UserId]
+		specs.epithet = specs[1]
+		specs.ink = specs[2]
+		
+		local message: string = title .. " " .. specs.epithet .. " has entered the Headspace!"
+		local quirk: string | string = specs.ink or "<font color ='#FF0000'>%s</font>"
 		announce:FireAllClients(message, quirk)
 	else
 		print(player.Name, "was not found in the administration registry.")
@@ -78,11 +93,11 @@ function adminPerms:GetPerms(player: Player, init: boolean)
 		for title: string, category2: {Instance} in pairs(category1) do
 			if title == "Magnitude" then continue end --not for storing IDs
 			
-			local index = table.find(category2, player.UserId)
+			local key = category2[player.UserId]
 			
-			if index then 
+			if key then 
 				if init then sender:FireClient(player, title, category1.Magnitude) end
-				return true, title, category1.Magnitude
+				return rank, title, category1.Magnitude::number
 			end
 		end
 	end

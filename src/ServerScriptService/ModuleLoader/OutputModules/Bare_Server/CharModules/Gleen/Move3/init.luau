@@ -49,7 +49,7 @@ function GM3:Trigger(player: Player)
 		sfx:Destroy()
 	end)
 	
-	local targets: {Instance} = damager:Damage(player, attackData)
+	local targets: {Humanoid} = damager:Damage(player, attackData)
 	local targetRoots = {}
 
 	for i, targetHum in ipairs(targets) do
@@ -63,21 +63,18 @@ function GM3:Trigger(player: Player)
 		return directionA < directionB
 	end)
 
-	if not targetRoots[1] or char:HasTag("Parried") then --necessary tagging for continuation-based moves
-		print("Discontinue")
+	if not targetRoots[1] then
 		char:AddTag("Discontinue") 
 		task.delay(0.1, function()
 			char:RemoveTag("Discontinue")
 		end)
 		return 
 	else
-		print("Continue")
 		char:AddTag("Continue")
 		task.delay(0.1, function()
 			char:RemoveTag("Continue")
 		end)
 		
-		--copy and pastable move sfx code
 		local sfx = script.Sound:Clone()
 		sfx.Parent = root
 		sfx:Play()

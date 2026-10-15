@@ -8,7 +8,7 @@ local knockback = RS.Remotes.Knockback
 local knockbackManager = {}
 
 local kbSpecs = {
-	light = 0.2,
+	light = 0.1,
 	medium = 0.3,
 	heavy = 0.5,
 	reverse = 0.25
@@ -29,7 +29,7 @@ function knockbackManager.Eval(player: Player, targetPlr: Player, targetRoot: Pa
 		knockback:FireClient(targetPlr, atktype, momentum)
 	end
 	
-	local duration = kbSpecs[atktype]
+	local duration = 0.1 --magic number for now
 	
 	if not targetChar:GetAttribute("RagdollTime") then 
 		targetChar:SetAttribute("RagdollTime", duration) 

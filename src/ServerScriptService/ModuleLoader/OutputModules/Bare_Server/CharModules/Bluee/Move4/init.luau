@@ -102,7 +102,7 @@ function BM4:Trigger(player: Player)
 	
 	char:AddTag("Resistance")
 
-	local targets: {Instance} = damager:Damage(player, attackData)
+	local targets: {Humanoid} = damager:Damage(player, attackData)
 	local targetRoots = {}
 
 	for i, targetHum in ipairs(targets) do

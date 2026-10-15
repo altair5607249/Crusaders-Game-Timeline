@@ -24,13 +24,11 @@ function RM2:Trigger(player: Player)
 		atkdur = 0.5,
 		atkrad = 4,
 		atktype = "heavy",
-		bypassParry = true,
+		bypassParry = (health < maxHealth * 0.2 and true) or false,
 		dmg = dmg + health^2/(8*maxHealth),
 		ID = 2,
 		style = "Bare"
 	}
-	
-	print(attackData.dmg)
 	
 	--calibrate effects
 	local hitPart = char:WaitForChild("hitPart")
@@ -63,9 +61,9 @@ function RM2:Trigger(player: Player)
 		atkdur = 0.3,
 		atkrad = 40,
 		atktype = "light",
-		bypassParry = true,
 		dmg = shockwaveDmg + health^2/(20*maxHealth),
 		ID = 2,
+		noStun = true,
 		shockwave = 0.5
 	}
 	

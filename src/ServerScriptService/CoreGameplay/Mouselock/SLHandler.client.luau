@@ -6,6 +6,7 @@ local RNS = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 local plrGui = player:WaitForChild("PlayerGui")
+local camera = workspace.CurrentCamera
 
 local inputAction = RS.AuxInputContexts.MouseStateContext.MouseLock
 local inputBinding = inputAction.InputBinding
@@ -15,6 +16,7 @@ local prevState = false
 local char = player.Character or player.CharacterAdded:Wait()
 local hum = char:WaitForChild("Humanoid")
 local root = char:WaitForChild("HumanoidRootPart")
+local head = char:WaitForChild("Head")
 
 local expectedAutoRotate = nil --guards against deferred echoes
 
@@ -23,11 +25,14 @@ local function enableShiftLock()
 	expectedAutoRotate = false
 	hum.AutoRotate = false
 	hum.CameraOffset = Vector3.new(1.75, 0, 0)
+	--camera.CFrame = head.CFrame * CFrame.new(1.75, 0, 0)
+	local offset = head.CFrame * CFrame.new(1.75, 5, 10)
 	RNS:BindToRenderStep("ShiftLock", Enum.RenderPriority.Character.Value, function()
 		if char:GetAttribute("Stunned") and not char:HasTag("Dashing") then return end --players should KEEP mouselock state during a dash
 		UIS.MouseBehavior = Enum.MouseBehavior.LockCenter
-		local _, y = workspace.CurrentCamera.CFrame.Rotation:ToEulerAnglesYXZ()
+		local _, y = camera.CFrame.Rotation:ToEulerAnglesYXZ()
 		root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, y, 0)
+		
 	end)
 end
 

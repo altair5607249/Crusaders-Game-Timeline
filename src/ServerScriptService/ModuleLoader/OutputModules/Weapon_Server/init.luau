@@ -7,24 +7,29 @@ local managers = script.Parent.Parent.Managers
 local cooldown = require(managers.CooldownManager)
 local stunManager = require(managers.StunManager)
 
+local spacing = require(RS.UniversalModules.Space)
 local timing = require(RS.UniversalModules.Time)
 
 local charModules = script.CharModules:GetChildren()
 local characters = {}
 
-for i, character in ipairs(charModules) do
-	for j, move in ipairs(character:GetChildren()) do
-		local class = require(move)
-		characters[character.Name] = characters[character.Name] or {}
-		table.insert(characters[character.Name], class)
+for i, character: Folder in ipairs(charModules) do
+	local moveScripts = character:GetChildren()
+	table.sort(moveScripts, function(a, b)
+		return a:GetAttribute("Order") < b:GetAttribute("Order")
+	end)
+
+	characters[character.Name] = {}
+	for j, move: ModuleScript in ipairs(moveScripts) do
+		table.insert(characters[character.Name], require(move))
 	end
 end
 
 local namespace = {
-	Redd = {"Feint", "Steal the Horizon", "Blade Parade", "Chanticleer Counter"},
-	Yello = {"Lash", "Flicker", "Electric Disc", "Godspeed"},
-	Gleen = {"Yeet", "Gyration", "Nature's Barricade", "Fracture"},
-	Bluee = {"Sever", "Copy", "Whirlpool", "Sword Trick"}
+	Redd = {"Feint", "Supernova", "Blade Parade", "Chanticleer Counter"},
+	Yello = {"Lasso", "Strobe", "Breakaway", "Borean Blitz"},
+	Gleen = {"Yeet", "Accretion Disk", "Anchor Point", "Ghillie Groundbreaker"},
+	Bluee = {"Rend", "Oumuamua", "Sword Trick", "Protean Pace"}
 }
 
 local weaponManager = {}
@@ -32,7 +37,7 @@ local weaponManager = {}
 function weaponManager.Action(player: Player, move: number, copiedCrusader: string)
 	local char = player.Character or player.CharacterAdded:Wait()
 
-	if char:HasTag("RagdollActive") or not char:HasTag("WeaponActive") then return end
+	if char:HasTag("RagdollActive") or not char:HasTag("WeaponActive") or char:HasTag("SolDisabled") then return end
 
 	local crusader = player:GetAttribute("Crusader")
 	local copycat = false
@@ -60,8 +65,6 @@ function weaponManager.Action(player: Player, move: number, copiedCrusader: stri
 	local earlyEnd = timing.GetValue(crusader, "Weapon", 5, move) --no recovery frames/anim commitment
 
 	char:AddTag("LoadingAttack")
-	
-	print("Loading", moveName)
 
 	local cancelMove = false
 	local listener
@@ -87,6 +90,10 @@ function weaponManager.Action(player: Player, move: number, copiedCrusader: stri
 	if earlyEnd ~= nil then stunManager.Eval(player, nil, duration, "Recovery") end --recovery frames/anim commitment
 
 	characters[crusader][move]:Trigger(player)
+end
+
+function weaponManager.GetMoves(crusader: string)
+	return namespace[crusader]
 end
 
 return weaponManager

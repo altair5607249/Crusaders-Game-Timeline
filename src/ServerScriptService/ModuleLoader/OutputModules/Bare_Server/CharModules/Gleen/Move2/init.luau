@@ -50,7 +50,7 @@ function GM2:Trigger(player: Player)
 		sfx:Destroy()
 	end)
 	
-	local targets: {Instance} = damager:Damage(player, attackData)
+	local targets: {Humanoid} = damager:Damage(player, attackData)
 	local targetRoots = {}
 	
 	for i, targetHum in ipairs(targets) do
@@ -64,7 +64,7 @@ function GM2:Trigger(player: Player)
 		return directionA < directionB
 	end)
 	
-	if not targetRoots[1] then --necessary tagging for continuation-based moves
+	if not targetRoots[1] then
 		print("Discontinue")
 		char:AddTag("Discontinue") 
 		task.delay(0.1, function()
@@ -81,8 +81,8 @@ function GM2:Trigger(player: Player)
 	
 	attackData = {
 		atkdur = duration*0.5,
-		atkrad = 10,
-		atktype = "heavy",
+		atkrad = 8,
+		atktype = "medium",
 		bdmg = dmg,
 		bypassParry = true,
 		dmg = healthCurve(health, maxHealth, dmg),

@@ -2,7 +2,7 @@ local CS = game:GetService("CollectionService")
 local SS = game:GetService("ServerStorage")
 
 local dummies = {}
-local templates = SS.Characters:GetChildren()
+local templates = SS["Templates (DO NOT QUERY)"]:GetChildren()
 
 for i, template in ipairs(templates) do
 	local name = template.Name
@@ -42,7 +42,7 @@ workspace.DescendantRemoving:Connect(function(object)
 		
 		local name = object.Name
 		local clone = dummies[name]:Clone()
-		clone.Parent = workspace
+		clone.Parent = workspace.Winterness.Dummies
 		clone:AddTag("Dummy")
 	end
 end)

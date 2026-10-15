@@ -9,35 +9,26 @@ local timing = require(RS.UniversalModules.Time)
 local damager = require(SSS.ModuleLoader.Managers.DamageManager)
 local movement = require(SSS.ModuleLoader.Managers.MovementManager)
 
-local function healthCurve(health: number, maxHealth: number, stat: number) --cubic curve
-	local b = (stat^(1/3))/maxHealth
-	return -(b*(health-maxHealth))^3 + stat
-end
-
 local GM4 = {}
 
 function GM4:Trigger(player: Player)
 	print("gm4")
 
-	if player:HasTag("HitFinished") then player:RemoveTag("HitFinished") end
-
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum: Humanoid = char:WaitForChild("Humanoid")
 	local root: Part = char:WaitForChild("HumanoidRootPart")
 	
-	local dmg = 20
-	local duration = timing.GetValue("Gleen", "Bare", 3, 4) - timing.GetValue("Gleen", "Bare", 1, 4)
+	char:AddTag("SolDisabled")
 	
-	local maxHealth = hum.MaxHealth
-	local currentHealth = hum.Health
-	local health = maxHealth - currentHealth
+	if char:HasTag("HitFinished") then char:RemoveTag("HitFinished") end
+	
+	local duration = timing.GetValue("Gleen", "Bare", 3, 4) - timing.GetValue("Gleen", "Bare", 1, 4)
 	
 	local attackData = {
 		atkdur = duration,
 		atkrad = 8,
 		atktype = "heavy",
-		bdmg = dmg,
-		dmg = healthCurve(health, maxHealth, dmg),
+		dmg = 40,
 		ID = 4,
 		oneHit = true,
 		style = "Bare"
@@ -81,6 +72,9 @@ function GM4:Trigger(player: Player)
 	
 	char:AddTag("Running") --sets up adding tolerance
 	char:AddTag("Resistance")
+	
+	local magnitude: number = spacing.GetValue("Gleen", 2) * 2 --speed of the ram
+	movement.ChangeTolerance(player, magnitude) --stops player from clashing with anticheat
 
 	local elapsed = 0
 	local loop
@@ -89,6 +83,8 @@ function GM4:Trigger(player: Player)
 
 		if elapsed >= attackData.atkdur or char:HasTag("HitFinished") or char:HasTag("Parried") then
 			loop:Disconnect()
+			
+			char:RemoveTag("SolDisabled")
 			
 			char:RemoveTag("Running")
 			char:RemoveTag("Resistance")
@@ -109,11 +105,8 @@ function GM4:Trigger(player: Player)
 			direction = direction.Unit
 		end
 		
-		local magnitude: number = spacing.GetValue("Gleen", 2) * 2 --speed of the ram
 		local step = direction * magnitude * dt
 		
-		movement.ChangeTolerance(player, magnitude) --stops player from clashing with anticheat
-
 		--checks the path before committing to it with raycasting, instead of phasing/teleporting
 		local result = workspace:Raycast(root.Position, step, raycastParams)
 		local newPosition: Vector3?

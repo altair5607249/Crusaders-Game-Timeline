@@ -45,14 +45,13 @@ function YM1:Trigger(player: Player)
 	testPart.Material = Enum.Material.Neon
 	testPart.Reflectance = 0.25
 	testPart.Size = Vector3.new(radius, radius, finalVector.Magnitude)
-	testPart.Transparency = 0.5
+	testPart.Transparency = 0.25
 	testPart.Parent = workspace
 	
 	local tweenBlast = TS:Create(testPart, tweenInfo, {Transparency = 1})
 	tweenBlast:Play()
 	task.spawn(function()
 		tweenBlast.Completed:Connect(function()
-			print("yay2")
 			tweenBlast:Destroy()
 			testPart:Destroy()
 		end)
@@ -67,6 +66,8 @@ function YM1:Trigger(player: Player)
 	end)
 
 	if not result then return end
+	
+	print(result.Name)
 	
 	local attackData = {
 		atkdur = duration,

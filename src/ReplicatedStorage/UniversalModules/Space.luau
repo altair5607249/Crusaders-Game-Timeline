@@ -15,6 +15,36 @@ local kbSpecs = {
 	reverse = -3
 }
 
+local frames = { --1 = recovery frames during animation, 2 = endlag (WIP, will finalize after enough beta testing)
+	Redd = {
+		M1 = {{false, false,false, false}, {0, 0, 0, 0}},
+		Bare = {{true, true, true, true}, {0, 0, 0, 0}},
+		Weapon = {{true, true, true, true}, {0, 0, 0, 0}},
+		Tech = {{true, true, true, true}, {0, 0, 0, 0}}
+	},
+
+	Yello = {
+		M1 = {{false, false,false, false}, {0, 0, 0, 0}},
+		Bare = {{true, true, true, true}, {0, 0, 0, 0}},
+		Weapon = {{true, true, true, false}, {0, 0, 0, 0}},
+		Tech = {{true, true, true, true}, {0, 0, 0, 0}}
+	},
+
+	Gleen = {
+		M1 = {{false, false,false, false}, {0, 0, 0, 0}},
+		Bare = {{true, true, true, true}, {0, 0, 0, 0}},
+		Weapon = {{true, true, true, true}, {0, 0, 0, 0}},
+		Tech = {{true, true, true, true}, {0, 0, 0, 0}}
+	},
+
+	Bluee = {
+		M1 = {{false, false,false, false}, {0, 0, 0, 0}},
+		Bare = {{true, true, true, true}, {0, 0, 0, 0}},
+		Weapon = {{true, true, true, true}, {0, 0, 0, 0}},
+		Tech = {{true, true, true, true}, {0, 0, 0, 0}}
+	}
+}
+
 local Space = {}
 
 function Space.GetValue(char: string, ID: number)
@@ -29,6 +59,32 @@ function Space.Knockback(attackerRoot: Part, targetRoot: Part, atktype: string)
 	local velocity: Vector3 = ((direction*100) - direction*((base^modifier)/base)) * (base/modifier)
 	
 	return velocity
+end
+
+function Space.GetFrameInfo(char: string, style: string, category: number, ID: number)
+	return frames[char][style][category][ID]
+end
+
+function Space.NearestCardinal(root: Part, fromPoint: Vector3)
+	local direction = (fromPoint - root.Position).Unit
+
+	local directions = {
+		Front = root.CFrame.LookVector,
+		Back = -root.CFrame.LookVector,
+		Right = root.CFrame.RightVector,
+		Left = -root.CFrame.RightVector
+	}
+
+	local best, bestName = -math.huge, nil --arbitrary values for setting the baseline
+	for name, vector in pairs(directions) do
+		local dot = direction:Dot(vector)
+		if dot > best then
+			best = dot
+			bestName = name
+		end
+	end
+
+	return best::number, bestName::string
 end
 
 return Space

@@ -6,6 +6,7 @@ local timing = require(RS.UniversalModules.Time)
 
 local cdRegistry = {}
 local loadGUI = RS.Remotes.LoadCooldown
+local cdChange = RS.Remotes.ChangeCooldown
 
 Players.PlayerAdded:Connect(function(player)
 	cdRegistry[player] = {}
@@ -33,8 +34,8 @@ function cooldown:Register(player: Player, move: string, style: string, ID: numb
 	
 	cdRegistry[player][char][move] = {os.clock(), ID} --char instances are distinct, regardless of shared template
 	
-	local crusader = player:GetAttribute("Crusader")
-	local moveCooldown = timing.GetValue(crusader, style, 2, ID)
+	local crusader: string = player:GetAttribute("Crusader")
+	local moveCooldown: number = timing.GetValue(crusader, style, 2, ID)
 	
 	loadGUI:FireClient(player, move, ID, moveCooldown)
 end
@@ -46,23 +47,32 @@ function cooldown:IsReady(player: Player, move: string, style: string)
 	
 	if entry == nil then return true end
 	
-	local ID = entry[2] --returns the specified previous input action
 	local prevInput = entry[1] --returns the specified previous input time/tick
+	local ID = entry[2] --returns the specified previous input action
 	
-	local crusader = player:GetAttribute("Crusader")
-	local constraint = timing.GetValue(crusader, style, 2, ID) --cooldown used as the constraint
+	local crusader: string = player:GetAttribute("Crusader")
+	local constraint: number = timing.GetValue(crusader, style, 2, ID) --cooldown used as the constraint
 	
 	return not timing.CheckConstraint(prevInput, constraint)
 end
 
-function cooldown:Manipulate(player: Player, move: string, magnitude: number) --WIP
+function cooldown.Manipulate(player: Player, move: string, style: string, magnitude: number) --WIP
 	local char = player.Character or player.CharacterAdded:Wait()
 	local charEntries = cdRegistry[player] and cdRegistry[player][char]
 	local entry = charEntries and charEntries[move]
 
 	if entry == nil then return true end
 
-	entry[1] += magnitude --can technically reduce wait time, add wait time, or eliminate it entirely
+	entry[1] += magnitude --can technically reduce wait time, add wait time, or eliminate it entirely by lying about the previous input
+	
+	local crusader: string = player:GetAttribute("Crusader")
+	local difference: number = entry[1] - os.clock()
+	local ID: number = entry[2]
+	
+	local newCooldown: number = timing.GetValue(crusader, style, 2, ID) + difference
+	
+	cdChange:FireClient(player, style, ID, entry[1])
+	loadGUI:FireClient(player, move, ID, newCooldown)
 end
 
 return cooldown

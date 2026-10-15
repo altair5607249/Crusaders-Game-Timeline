@@ -10,6 +10,7 @@ local timing = require(RS.UniversalModules.Time)
 local animHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.AnimationHandler)
 
 local attack = RS.Remotes.Attack
+local cdChange = RS.Remotes.ChangeCooldown
 local equipEvent = RS.Remotes.EquipWeapon
 
 local bareStyle = RS.InputContexts.BareContext
@@ -23,20 +24,13 @@ local bareRegistry, weaponRegistry, swapRegistry
 local bareAnims = script.BareAnimations
 local weaponAnims = script.WeaponAnimations
 
-RS.Remotes.CopyAnimation.OnClientEvent:Connect(function(copiedCrusader: string, copiedMove: number, style: string)
-	local animations
-	
-	if style == "Weapon" then
-		animations = weaponAnims
-	else
-		animations = bareAnims
-	end
-	
-	local copiedAnimTracks = animHandler:LoadAnimations(animator, animations, copiedCrusader, style)
-	copiedAnimTracks[copiedMove]:Play()
+local Sol = {}
+
+RS.Remotes.CopyMove.OnClientEvent:Connect(function(copiedCrusader: string, move: number, style: string)
+	Sol.Input(move, style, copiedCrusader)
 end)
 
-local Sol = {}
+local initialSpawn = true
 
 local function onCharacterChanged()
 	IAS:Disconnect(IAS:GetActiveContexts())
@@ -56,7 +50,11 @@ local function onCharacterChanged()
 
 	swapRegistry = 0
 	
-	Sol.IAS()
+	if initialSpawn then
+		initialSpawn = false
+	else
+		Sol.IAS()
+	end
 end
 
 if player.Character then onCharacterChanged() end --covers the case where the player's character already exists before this script runs
@@ -64,12 +62,17 @@ player.CharacterAdded:Connect(function()
 	onCharacterChanged() --callback in case of respawn and/or character swap
 end)
 
-function Sol.Input(move: number, style: string)
+cdChange.OnClientEvent:Connect(function(style: string, ID: number, newTime: number)
+	local registry = (style == "Weapon" and weaponRegistry) or bareRegistry
+	registry[ID] = newTime
+end)
+
+function Sol.Input(move: number, style: string, copy: string)
 	if hum == nil or hum.Health <= 0 then return end
-	if char:HasTag("ActiveInput") or char:HasTag("RagdollActive") then return end
+	if char:HasTag("ActiveInput") or char:HasTag("RagdollActive") or char:HasTag("SolDisabled") then return end
 	
-	local constraint = timing.GetValue(crusader, style, 2, move)
-	
+	local confirmedCrusader = (copy ~= nil and copy) or crusader
+	local constraint = timing.GetValue(confirmedCrusader, style, 2, move)
 	local animTracks: {Animation}, registry: {number}
 	
 	if style == "Weapon" then
@@ -80,18 +83,29 @@ function Sol.Input(move: number, style: string)
 		registry = bareRegistry
 	end
 	
-	if timing.CheckConstraint(registry[move], constraint) or char:GetAttribute("Stunned") then return end
+	if not copy then
+		if timing.CheckConstraint(registry[move], constraint) or char:GetAttribute("Stunned") then return end
+	end
 	
 	char:AddTag("ActiveInput")
 	
-	local delayTime: number = timing.GetValue(crusader, style, 1, move)
-	local duration: number = timing.GetValue(crusader, style, 3, move) - delayTime
+	local delayTime: number = timing.GetValue(confirmedCrusader, style, 1, move)
+	local duration: number = timing.GetValue(confirmedCrusader, style, 3, move) - delayTime
 	
-	local animTrack = animTracks[move]
+	local animTrack: AnimationTrack? = nil
+	
+	if not copy then
+		animTrack = animTracks[move]
+	else
+		local animations = (style == "Weapon" and weaponAnims) or bareAnims
+		local copiedAnimTracks = animHandler:LoadAnimations(animator, animations, copy, style)
+		animTrack = copiedAnimTracks[move]
+	end
+	
 	animTrack:Play()
-	attack:FireServer(style .. "_Server", move)
+	attack:FireServer(style .. "_Server", move, copy)
 	
-	registry[move] = os.clock()
+	if not copy then registry[move] = os.clock() end
 	
 	task.spawn(function() --cancellation thread for certain conditions being met
 		local thread = coroutine.running()
@@ -124,7 +138,7 @@ function Sol.Input(move: number, style: string)
 			end
 		end))
 		
-		local continuation: boolean = timing.GetValue(crusader, style, 5, move)
+		local continuation: boolean = timing.GetValue(confirmedCrusader, style, 5, move)
 		
 		if continuation then
 			table.insert(listeners, CS:GetInstanceAddedSignal("Discontinue"):Connect(function(instance)
@@ -151,15 +165,13 @@ end
 
 function Sol.SwitchStyle(style: InputContext)
 	if hum == nil or hum.Health <= 0 then return end
-	if char:HasTag("ActiveInput") or char:HasTag("RagdollActive") then return end
+	if char:HasTag("ActiveInput") or char:HasTag("RagdollActive") or char:HasTag("TechsDisabled") then return end
 	
 	local constraint = timing.GetValue(crusader, "Tech", 2, 4)
 	
 	if timing.CheckConstraint(swapRegistry, constraint) or char:GetAttribute("Stunned") then return end
 	
 	swapRegistry = os.clock()
-	
-	print("Switching to", tostring(style) .. "...")
 	
 	local animTracks: {Animation}, currentStyle: InputContext?, listener: RBXScriptSignal?
 	
@@ -205,8 +217,6 @@ local weaponSpecs = {
 }
 
 function Sol.IAS()
-	print(tostring(defaultStyle), "has been loaded!")
-	
 	local style = defaultStyle --defaults to bare (or weapon IF it was active beforehand) style
 
 	local specs: {any}? = nil

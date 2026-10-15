@@ -7,16 +7,21 @@ local managers = script.Parent.Parent.Managers
 local cooldown = require(managers.CooldownManager)
 local stunManager = require(managers.StunManager)
 
+local spacing = require(RS.UniversalModules.Space)
 local timing = require(RS.UniversalModules.Time)
 
 local charModules = script.CharModules:GetChildren()
 local characters = {}
 
-for i, character in ipairs(charModules) do
-	for j, move in ipairs(character:GetChildren()) do
-		local class = require(move)
-		characters[character.Name] = characters[character.Name] or {}
-		table.insert(characters[character.Name], class)
+for i, character: Folder in ipairs(charModules) do
+	local moveScripts = character:GetChildren()
+	table.sort(moveScripts, function(a, b)
+		return a:GetAttribute("Order") < b:GetAttribute("Order")
+	end)
+	
+	characters[character.Name] = {}
+	for j, move: ModuleScript in ipairs(moveScripts) do
+		table.insert(characters[character.Name], require(move))
 	end
 end
 
@@ -24,7 +29,7 @@ local namespace = {
 	Redd = {"Headbutt", "Hero's Fist", "Sacred Circle", "Sixth Sense"},
 	Yello = {"Beam", "Invisible Attack", "Fulmination", "Rift Rush"},
 	Gleen = {"Suplex", "Animal Instinct", "Give Gifts", "Breach"},
-	Bluee = {"Rend", "Copy", "Vortex", "Gamble"}
+	Bluee = {"Rip", "Copy", "Vortex", "Gamble"}
 }
 
 local bareManager = {}
@@ -32,7 +37,7 @@ local bareManager = {}
 function bareManager.Action(player: Player, move: number, copiedCrusader: string)
 	local char = player.Character or player.CharacterAdded:Wait()
 	
-	if char:HasTag("RagdollActive") or char:HasTag("WeaponActive") then return end
+	if char:HasTag("RagdollActive") or char:HasTag("WeaponActive") or char:HasTag("SolDisabled") then return end
 	
 	local crusader = player:GetAttribute("Crusader")
 	local copycat = false
@@ -61,8 +66,6 @@ function bareManager.Action(player: Player, move: number, copiedCrusader: string
 	
 	char:AddTag("LoadingAttack")
 	
-	print("Loading", moveName)
-	
 	local cancelMove = false
 	local listener
 	
@@ -87,6 +90,10 @@ function bareManager.Action(player: Player, move: number, copiedCrusader: string
 	if earlyEnd ~= nil then stunManager.Eval(player, nil, duration, "Recovery") end --recovery frames/anim commitment
 	
 	characters[crusader][move]:Trigger(player)
+end
+
+function bareManager.GetMoves(crusader: string)
+	return namespace[crusader]
 end
 
 return bareManager

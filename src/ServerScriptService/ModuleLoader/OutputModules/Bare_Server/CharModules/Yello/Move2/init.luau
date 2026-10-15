@@ -61,7 +61,7 @@ function YM2:Trigger(player: Player)
 			style = "Bare"
 		}
 
-		local targets: {Instance} = damager:Damage(player, attackData)
+		local targets: {Humanoid} = damager:Damage(player, attackData)
 		
 		if not targets then return end
 		

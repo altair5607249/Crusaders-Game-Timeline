@@ -15,6 +15,7 @@ function YM3:Trigger(player: Player)
 	print("ym3")
 	
 	local char = player.Character or player.CharacterAdded:Wait()
+	local hum: Humanoid = char:WaitForChild("Humanoid")
 	local root = char:WaitForChild("HumanoidRootPart")
 	
 	local duration = timing.GetValue("Yello", "Bare", 3, 3) - timing.GetValue("Yello", "Bare", 1, 3)
@@ -29,6 +30,15 @@ function YM3:Trigger(player: Player)
 		origin = root,
 		style = "Bare"
 	}
+	
+	local cost = 35
+	local stamina: number = hum:GetAttribute("Stamina")
+	
+	if stamina <= cost then
+		hum:SetAttribute("Stamina", 0)
+	else
+		hum:SetAttribute("Stamina", stamina - cost)
+	end
 	
 	--copy and pastable move sfx code
 	local sfx = script.Sound:Clone()

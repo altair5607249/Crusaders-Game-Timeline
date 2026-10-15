@@ -21,7 +21,7 @@ local weaponQuirks = {
 	},
 	Gleen = {
 		dmg = 2,
-		range = 3
+		range = 2.75
 	},
 	Bluee = {
 		dmg = 3,
@@ -48,8 +48,11 @@ function m1Manager.Action(player: Player, index: number)
 	local crusader: string = player:GetAttribute("Crusader")
 	
 	local char = player.Character or player.CharacterAdded:Wait()
+	local hum = char:WaitForChild("Humanoid")
 	local cheating = false
 	local comboExtension = timing.GetValue(crusader, "M1", 3, 1) + 0.5
+	
+	if char:HasTag("SolDisabled") then return end
 	
 	if index > 4 then return end --just incase a modified client tries to pass their strike index as 4 when it isnt actually 4
 	if not cooldown:IsReady(player, "M1", "M1") or char:GetAttribute("Stunned") then return end
@@ -69,10 +72,23 @@ function m1Manager.Action(player: Player, index: number)
 	m1Registry[player].prevTick = os.clock()
 	cooldown:Register(player, "M1", "M1", index)
 	
+	if char:HasTag("WeaponActive") then
+		local cost = 5
+		local stamina = hum:GetAttribute("Stamina")
+
+		if stamina < cost then
+			return
+		else
+			hum:SetAttribute("Stamina", stamina - cost)
+		end
+	end
+	
 	local root: Part = char:FindFirstChild("HumanoidRootPart")
+	local duration: number = timing.GetValue(crusader, "M1", 3, index) - timing.GetValue(crusader, "M1", 1, index)
 	
 	local sfx = script.MissSound:Clone() --could be a miss sound, but it's mostly sfx for charging the punch
 	sfx.Parent = root
+	sfx.PlaybackSpeed = (sfx.TimeLength / duration) + 0.05 --for insurance that the sounds dont clash
 	sfx:Play()
 	sfx.Ended:Connect(function()
 		sfx:Destroy()
@@ -83,14 +99,16 @@ function m1Manager.Action(player: Player, index: number)
 	local dmg = spacing.GetValue(crusader, 3)
 	
 	local hum = char:WaitForChild("Humanoid")
-	local speed, jump = spacing.GetValue(crusader, 1), spacing.GetValue(crusader, 3)
+	local speed: number | number = (char:HasTag("ConserveSpeed") and hum.WalkSpeed) or spacing.GetValue(crusader, 1)
 	hum.WalkSpeed = speed/3
+	
+	local addend: number | number = (char:HasTag("WeaponActive") and weaponQuirks[crusader].dmg) or 0
 	
 	local attackData = {
 		atkdur = duration,
 		atkrad = 3.5,
 		atktype = (index == 4 and "heavy") or "light", --see stun manager for time references
-		dmg = (dmg + 0.5*(index-1)^2) + weaponQuirks[crusader].dmg, --dmg calculations (parabolic curve)
+		dmg = (dmg + 0.5*(index-1)^2) + addend, --dmg calculations (parabolic curve)
 		getTargets = true,
 		ID = index,
 		style = "M1"
@@ -107,6 +125,11 @@ function m1Manager.Action(player: Player, index: number)
 			local targets: {Instance} = damager:Damage(player, attackData)
 			
 			if targets and targets[1] and not char:HasTag("Parried") then
+				if char:HasTag("Godspeed") then 
+					local stamina = hum:GetAttribute("Stamina")
+					hum:SetAttribute("Stamina", stamina + 6) 
+				end
+				
 				if attackData.atktype == "light" then
 					local sfx = script.Sound:Clone()
 					sfx.Parent = root

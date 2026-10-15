@@ -19,7 +19,7 @@ function BM1:Trigger(player: Player)
 	local char = player.Character or player.CharacterAdded:Wait()
 	local root: Part = char:WaitForChild("HumanoidRootPart")
 	
-	local dmg = 60
+	local dmg = 55
 	
 	local characterList = CS:GetTagged("Character")
 	local filtered = {}
@@ -85,7 +85,6 @@ function BM1:Trigger(player: Player)
 		atkdur = duration,
 		atkrad = 2.5,
 		atktype = "heavy",
-		bypassParry = true,
 		dmg = dmg,
 		ID = 1,
 		oneHit = true,

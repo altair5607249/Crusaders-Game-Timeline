@@ -12,8 +12,8 @@ for i, folder in ipairs(script:GetChildren()) do
 	end
 end
 
-remotes.Attack.OnServerEvent:Connect(function(player, atkRoute: string, modifier: number)
-	atkRoutes[atkRoute].Action(player, modifier)
+remotes.Attack.OnServerEvent:Connect(function(player, atkRoute: string, modifier: number, copiedCrusader: string)
+	atkRoutes[atkRoute].Action(player, modifier, copiedCrusader)
 end)
 
 remotes.CharacterChange.OnServerEvent:Connect(function(player, crusader: string, skin: string)

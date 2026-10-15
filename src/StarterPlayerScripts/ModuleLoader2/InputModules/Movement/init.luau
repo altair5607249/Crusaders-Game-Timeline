@@ -62,6 +62,7 @@ function movement.Dash(dashDur: number, direction: Vector3)
 	local stamina: number = hum:GetAttribute("Stamina")
 	if stamina <= 0 then return end --no stamina, no dice
 	if char:HasTag("ActiveInput") then return end
+	if char:HasTag("TechsDisabled") then return end
 	
 	local anim: Animation?, name: string?
 	
@@ -139,6 +140,8 @@ function movement.Dash(dashDur: number, direction: Vector3)
 end
 
 function movement.Sprint(sprinting: boolean)
+	if char:HasTag("TechsDisabled") then return end
+	
 	RS.Remotes.MovementTrigger:FireServer("runSpecs", "Sprint", sprinting)
 
 	if sprinting and hum:GetAttribute("Stamina") > 0 then
@@ -162,9 +165,8 @@ function movement.Sprint(sprinting: boolean)
 end
 
 function movement.Parry(anim: Animation) 
-	print("Parry") 
-	
 	if char:HasTag("ActiveInput") then return end
+	if char:HasTag("TechsDisabled") then return end
 	
 	local name = "Parry"
 	local constraint = timing.GetValue(crusader, "Tech", 2, techSpecs[name])

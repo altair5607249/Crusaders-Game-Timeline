@@ -1,3 +1,4 @@
+local CS = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local SSS = game:GetService("ServerScriptService")
@@ -17,11 +18,15 @@ local bareOptions: {number}?, weaponOptions: {number}?
 local bareAnimTracks: {Animation}?, weaponAnimTracks: {Animation}?
 local bareAnims, weaponAnims = script.BareAnimations, script.WeaponAnimations
 
+local function resetOptions()
+	bareOptions = {1, 2, 3}
+	weaponOptions = {1, 2, 3}
+end
+
 local function onCharacterChanged()
 	crusader = player:GetAttribute("Crusader")
 	
-	bareOptions = {1, 2, 3}
-	weaponOptions = {1, 2, 3}
+	resetOptions()
 	
 	prevInput, count, db = 0, 0, false
 	comboExtension = timing.GetValue(crusader, "M1", 3, 1) + 0.5
@@ -46,7 +51,12 @@ function m1.Click()
 	if not db then
 		if hum == nil or hum.Health <= 0 then return end
 		if char:GetAttribute("Stunned") then return end
-		if char:HasTag("ActiveInput") then return end
+		if char:HasTag("ActiveInput") or char:HasTag("SolDisabled") then return end
+		
+		if char:HasTag("WeaponActive") then
+			local stamina = hum:GetAttribute("Stamina")
+			if stamina < 5 then return end
+		end
 		
 		char:AddTag("ActiveInput")
 
@@ -62,20 +72,16 @@ end
 
 function m1:Attack(index: number)
 	--blue's randomizer stuff
-	local animTracks: {Animation}?, options: {number}?
-
-	if char:HasTag("WeaponActive") then
-		animTracks = weaponAnimTracks
-		options = weaponOptions
-		print("weaponry")
-	else
-		animTracks = bareAnimTracks
-		options = bareOptions
-		print("straight hands")
-	end
+	local animTracks: {Animation} = char:HasTag("WeaponActive") and weaponAnimTracks or bareAnimTracks
+	local options: {number} = char:HasTag("WeaponActive") and weaponOptions or bareOptions
 	
 	if crusader == "Bluee" and count < 4 then
-		if #options == 0 or count == 1 then options = {1, 2, 3} end
+		if #options == 0 or count == 1 then 
+			table.clear(options)
+			table.insert(options, 1)
+			table.insert(options, 2)
+			table.insert(options, 3)
+		end
 		local choice = math.random(1, #options)
 		index = options[choice]
 		table.remove(options, choice)
@@ -99,6 +105,9 @@ function m1:Attack(index: number)
 		char:RemoveTag("ActiveInput")
 	end)
 end
+
+CS:GetInstanceAddedSignal("WeaponActive"):Connect(resetOptions)
+CS:GetInstanceRemovedSignal("WeaponActive"):Connect(resetOptions)
 
 local mouseSpecs = {
 	{name = "Punch", callback = function() m1.Click() end}

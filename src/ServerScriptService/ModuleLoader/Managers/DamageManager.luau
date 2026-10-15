@@ -20,19 +20,20 @@ local vfxQuirks = {
 
 local DamageManager = {}
 
-function DamageManager:Damage(player: Player, attributes: {Instance})
+function DamageManager:Damage(player: Player, attributes: {any})
 	local char = nil 
 	
 	if player:IsA("Player") then char = player.Character or player.CharacterAdded:Wait()
 	else char = player end --for dummies (remove after testing phase)
 	
-	local root = char:WaitForChild("HumanoidRootPart")
-	local hum = char:WaitForChild("Humanoid")
+	local root: Part = char:WaitForChild("HumanoidRootPart")
+	local hum: Humanoid = char:WaitForChild("Humanoid")
 	local origin: Part = attributes["origin"] or char:WaitForChild("hitPart", 2)
 
 	if hum == nil or hum.Health <= 0 then return end
 
 	local targets = {}
+	local dotTargets = {}
 	
 	local characterList = CS:GetTagged("Character")
 	local filtered = {}
@@ -49,17 +50,22 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 	local center
 	local oldOrigin
 	
-	--various sub-attack types
 	if attributes["shockwave"] then
 		oldOrigin = origin
-		origin = oldOrigin:Clone()
-		origin.CFrame = oldOrigin.CFrame * CFrame.new(0, 0, -attributes["atkrad"]/2)
+		if typeof(origin) ~= "CFrame" then
+			origin = oldOrigin:Clone()
+			origin.CFrame = oldOrigin.CFrame * CFrame.new(0, 0, -attributes.atkrad/2)
+		else
+			origin *= CFrame.new(0, 0, -attributes.atkrad/2)
+		end
 	end
 	
 	local bind
 	if attributes["getTargets"] then
 		bind = Instance.new("BindableEvent")
 	end
+	
+	local changingDOT = false
 	
 	local loop
 	local duration = 0
@@ -72,7 +78,29 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 			return --ends current frame too
 		end
 		
-		if attributes["expanding"] then attributes["atkrad"] *= attributes["expanding"]^dt end
+		if attributes.expanding then attributes.atkrad *= attributes.expanding^dt end
+		
+		if attributes.DOTchange and not changingDOT then
+			changingDOT = true
+			
+			task.spawn(function()
+				while true do
+					local initialTime = os.clock()
+					
+					repeat task.wait() until os.clock() - initialTime >= attributes.DOT or duration >= attributes.atkdur
+					
+					attributes.DOT *= attributes.DOTchange
+					
+					if duration >= attributes.atkdur then break end
+				end
+				
+				for i, targetHum: Humanoid in ipairs(dotTargets) do
+					if targetHum:HasTag("Immortal") then
+						targetHum:RemoveTag("Immortal")
+					end
+				end
+			end)
+		end
 		
 		center = (typeof(origin) == "CFrame" and origin) or origin.CFrame
 		
@@ -82,10 +110,10 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 			if not targetChar then continue end
 			
 			local targetPlr = Players:GetPlayerFromCharacter(targetChar)
-			local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
+			local targetRoot: Part = targetChar:FindFirstChild("HumanoidRootPart")
 			if not targetRoot then continue end
 			
-			local targetHum = targetChar:FindFirstChild("Humanoid")
+			local targetHum: Humanoid = targetChar:FindFirstChild("Humanoid")
 			if not targetHum or targetHum.Health <= 0 or targetHum == hum then continue end
 			
 			if targetHum:HasTag("Immortal") or targetHum:HasTag("Blessed") then continue end --for i-frames
@@ -102,7 +130,7 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 				end)
 			end
 			
-			if not attributes["bypassParry"] and targetChar:HasTag("Parrying") then
+			if not attributes.bypassParry and targetChar:HasTag("Parrying") then
 				char:AddTag("Parried")
 				
 				targetChar:AddTag("SuccessfulParry")
@@ -122,15 +150,19 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 			
 			if attributes["shockwave"] ~= nil then
 				local direction = (targetRoot.Position - oldOrigin.Position).Unit
-				local dotProduct = oldOrigin.CFrame.LookVector:Dot(direction)
+				local dotProduct = (typeof(oldOrigin) == "CFrame" and oldOrigin.LookVector:Dot(direction)) or oldOrigin.CFrame.LookVector:Dot(direction)
 				
 				if dotProduct < attributes["shockwave"] then continue end
 			end
 
 			if not table.find(targets, targetHum) then
-				if not attributes["DOT"] then table.insert(targets, targetHum) end --for damage-over-time attacks
+				if not attributes["DOT"] then 
+					table.insert(targets, targetHum) 
+				else
+					if not table.find(dotTargets, targetHum) then table.insert(dotTargets, targetHum) end
+				end
 				
-				targetHum:TakeDamage(attributes["dmg"]) --most important line obviously
+				local dmg: number?, resetDmg: boolean = nil, false
 				
 				if attributes["oneHit"] and targetPlr then
 					duration = attributes["atkdur"] --cuts off the sequential damage frames
@@ -139,7 +171,7 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 						char:RemoveTag("HitFinished")
 					end)
 				end
-				
+
 				if attributes["DOT"] then 
 					targetHum:AddTag("Immortal") --i-frames for DOT; we're not adding Sans-level mechanics here
 					task.delay(attributes["DOT"], function()
@@ -147,22 +179,70 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 					end)
 				end
 				
+				if targetHum:GetAttribute("Reflect") then
+					hum:TakeDamage(attributes.dmg / targetHum:GetAttribute("Reflect"))
+					continue
+				end
+				
+				if targetHum:GetAttribute("Shield") then
+					if targetHum:GetAttribute("ShieldDirection") then
+						local validDirection: string = targetHum:GetAttribute("ShieldDirection")
+						
+						local dot, direction = spacing.NearestCardinal(targetRoot, origin.Position)
+						
+						if direction == validDirection then
+							local currentShield: number = targetHum:GetAttribute("Shield")
+							local newShield: number = currentShield - attributes.dmg
+
+							targetHum:SetAttribute("Shield", newShield)
+
+							if newShield < 0 then
+								dmg = newShield * -1
+								resetDmg = true
+								targetHum:SetAttribute("Shield", nil)
+							else
+								continue
+							end
+						end
+					end
+				end
+				
+				if not dmg then 
+					targetHum:TakeDamage(attributes.dmg) --most important line obviously
+				else
+					targetHum:TakeDamage(dmg) --for target-specific damage
+					if resetDmg then dmg = nil; resetDmg = false end --not useful now, but remains in the case of scripting unique, same-iteration logic
+				end
+				
 				if not targetHum or targetHum.Health <= 0 then 
 					if targetPlr then --adds a KO if it's a player
 						player.leaderstats["KO's"].Value += 1
+						
+						local regen = ((hum.MaxHealth - hum.Health) / hum.MaxHealth) * 100
+						hum.Health += math.clamp(regen, 0, hum.MaxHealth)
 					end
-					
 					continue 
+				end
+				
+				if attributes.drainStamina then
+					local stamina: number = targetHum:GetAttribute("Stamina")
+					if stamina > attributes.drainStamina then 
+						targetHum:SetAttribute("Stamina", stamina - attributes.drainStamina)
+					else
+						targetHum:SetAttribute("Stamina", 0)
+					end
 				end
 				
 				if targetChar:HasTag("Resistance") then continue end --available during rush-style and ult attacks
 				
 				if attributes["precedent"] ~= true then
-					if not attributes["shockwave"] then 
+					if not attributes["noStun"] then --ideal for shockwaves
+						print("Hitstun!")
 						stun:DurReg(player, targetPlr, attributes["atktype"], attributes["style"], attributes["ID"], "Hit") --hitstun 
 					end
 					
-					if not attributes["expanding"] then 
+					if not attributes["noKB"] then --ideal for DOT
+						print("Knockback!")
 						kb.Eval(player, targetPlr, targetRoot, attributes["atktype"]) --knockback
 					end
 				end
@@ -180,20 +260,27 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 		testPart.Size = Vector3.new(size, size, size)
 		testPart.CanCollide = false
 		testPart.CanQuery = false
-		testPart.Transparency = 0.94
+		testPart.Transparency = 0.95
 		testPart.Parent = workspace
-
-		if testPart == nil then
-			warn("Hitbox is nil!")
+		
+		if attributes.bypassParry == true then 
+			testPart.Material = Enum.Material.Neon 
+			testPart.Transparency = 0.97
 		end
 
-		debby:AddItem(testPart, 0.3)
+		if testPart == nil then warn("Hitbox is nil!") end
+
+		debby:AddItem(testPart, 0.2)
 
 		duration += dt
-		if duration >= attributes["atkdur"] then
+		if duration >= attributes.atkdur then
 			loop:Disconnect()
-			if attributes["shockwave"] then origin:Destroy() end
-			if attributes["getTargets"] then 
+			if attributes["shockwave"] then 
+				if typeof(origin) ~= "CFrame" then 
+					origin:Destroy() 
+				end
+			end
+			if attributes["getTargets"] then
 				local clonedTargets = table.clone(targets)
 				bind:Fire(clonedTargets)
 			end

@@ -1,15 +1,23 @@
-local CP = game:GetService("ContentProvider") --dont make fun of me id just rather abbreviate
+local CP = game:GetService("ContentProvider")
 local RS = game:GetService("ReplicatedStorage")
 local remotes = RS.Remotes
 local player = game:GetService("Players").LocalPlayer
 
 local function preloadAllVFX()
 	local assetsToLoad = {}
-	for _, descendant in ipairs(RS.AttackVFX:GetDescendants()) do
-		if descendant:IsA("BasePart") or descendant:IsA("Decal") or descendant:IsA("ParticleEmitter") or descendant:IsA("Sound") or descendant:IsA("Texture") or descendant:IsA("Beam") then
-			table.insert(assetsToLoad, descendant)
+	
+	for _, desc in ipairs(RS.AttackVFX:GetDescendants()) do
+		if desc:IsA("BasePart") or desc:IsA("Decal") or desc:IsA("ParticleEmitter") or desc:IsA("Sound") or desc:IsA("Texture") or desc:IsA("Beam") then
+			table.insert(assetsToLoad, desc)
 		end
 	end
+	
+	for _, desc in ipairs(script:GetDescendants()) do
+		if desc:IsA("Animation") then
+			table.insert(assetsToLoad, desc)
+		end
+	end
+	
 	CP:PreloadAsync(assetsToLoad)
 end
 

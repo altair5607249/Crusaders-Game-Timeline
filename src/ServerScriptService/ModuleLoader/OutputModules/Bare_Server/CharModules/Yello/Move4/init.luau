@@ -26,9 +26,7 @@ function YM4:Trigger(player: Player)
 	clone.Position = root.Position
 	clone.Parent = workspace
 	
-	task.wait(duration - 0.01) --oh my, extra-secret delay?? how scandalous!!!
-	
-	char:AddTag("RagdollActive")
+	task.wait(duration - 0.01) --oh my, secret extra delay?? how scandalous!!!
 	
 	local dmg = 20
 	local distance = 50
@@ -92,7 +90,6 @@ function YM4:Trigger(player: Player)
 	
 	task.delay(duration, function()
 		if player.Parent ~= Players then return end
-		char:RemoveTag("RagdollActive")
 		
 		tweenWhoosh:Play()
 		tweenValue:Play()
@@ -101,7 +98,6 @@ function YM4:Trigger(player: Player)
 			atkdur = duration,
 			atkrad = 10,
 			atktype = "light",
-			bdmg = dmg,
 			dmg = dmg,
 			ID = 4,
 			origin = root,

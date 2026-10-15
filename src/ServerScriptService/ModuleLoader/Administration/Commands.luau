@@ -22,10 +22,10 @@ local function findModel(modelName: string)
 end
 
 receiver.OnServerEvent:Connect(function(admin, protocol: string, subject: string)
-	local result: boolean, title: number, clearance: number = registry:GetPerms(admin, false)
+	local rank: string, title: number, clearance: number = registry:GetPerms(admin, false)
 	local command = adminCmds[protocol]
 	
-	if not result then warn(admin.Name, "is attempting to access restricted protocols!") return end
+	if not rank then warn(admin.Name, "is attempting to access restricted protocols!") return end
 	if not command then warn("Protocol:", protocol, "does not exist.") return end
 	
 	command(subject, admin, clearance) --elite syntax right here; luau's vm stack approach ignores extra/unnecessary argumetns
@@ -84,7 +84,7 @@ function adminCmds.Teleport(modelName: string, admin: Player, clearance: number)
 	local char: Model = admin.Character or admin.CharacterAdded:Wait()
 	local root: Part = char:WaitForChild("HumanoidRootPart")
 	
-	root.Position = model:FindFirstChildWhichIsA("Part").Position
+	root:PivotTo(model:FindFirstChildWhichIsA("Part").CFrame)
 	
 	admin:SetAttribute("lastServerPos", root.Position) --prevents rubberbanding
 end

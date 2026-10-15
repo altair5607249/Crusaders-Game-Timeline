@@ -17,7 +17,7 @@ Players.PlayerAdded:Connect(function(player)
 	weaponRegistry[player] = {}
 	
 	player.CharacterAdded:Connect(function(char)
-		weaponRegistry[player][char] = {true, nil} --meaning the player's current style is bare
+		weaponRegistry[player][char] = {true, nil, nil} --1 indicates whether the style is bare, 2 is the idle quirk, 3 is the debuff
 	end)
 	
 	player.CharacterRemoving:Connect(function(char)
@@ -31,10 +31,10 @@ Players.PlayerRemoving:Connect(function(player)
 end)
 
 local weaponCoords = {
-	Redd = CFrame.new(0, -1.2, 0.9) * CFrame.Angles(1.5708, 0, 0),
+	Redd = CFrame.new(0, -1.2, 0.9) * CFrame.Angles(90, 0, 0),
 	Yello = CFrame.new(0, 2.5, 0) * CFrame.Angles(0, 0, 0),
-	Gleen = CFrame.new(0, -1.2, 0.9) * CFrame.Angles(90, 0, 0),
-	Bluee = CFrame.new(0, -1.2, 0.9) * CFrame.Angles(90, 0, 0),
+	Gleen = CFrame.new(0, 0, 0) * CFrame.Angles(0, 0, 0),
+	Bluee = CFrame.new(0.65, 2, 0) * CFrame.Angles(math.rad(-90), math.rad(45), math.rad(90)),
 }
 
 local function sway(joint: Motor6D, active: boolean)
@@ -140,7 +140,7 @@ receiver.OnServerEvent:Connect(function(player)
 				sway(weaponJoint, false)
 				rope.Attachment1 = nil 
 			end
-
+			
 			weaponJoint:Destroy()
 		end
 	end)

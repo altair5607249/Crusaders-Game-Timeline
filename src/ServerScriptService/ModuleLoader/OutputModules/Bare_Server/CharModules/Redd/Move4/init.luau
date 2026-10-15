@@ -12,6 +12,8 @@ function RM4:Trigger(player: Player)
 	local hum: Humanoid = char:WaitForChild("Humanoid")
 	local root = char:WaitForChild("HumanoidRootPart")
 	
+	char:AddTag("SolDisabled")
+	
 	if char:HasTag("HitFinished") then char:RemoveTag("HitFinished") end
 	
 	local duration = timing.GetValue("Redd", "Bare", 3, 4) - timing.GetValue("Redd", "Bare", 1, 4)
@@ -29,6 +31,8 @@ function RM4:Trigger(player: Player)
 	
 	hum:AddTag("Immortal")
 	task.delay(delayTime, function()
+		char:RemoveTag("SolDisabled")
+		
 		hum.WalkSpeed = spacing.GetValue("Redd", 1)
 		
 		hum:RemoveTag("Immortal")

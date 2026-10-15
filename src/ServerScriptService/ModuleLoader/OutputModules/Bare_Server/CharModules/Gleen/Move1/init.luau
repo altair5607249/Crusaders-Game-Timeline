@@ -10,11 +10,6 @@ local damager = require(SSS.ModuleLoader.Managers.DamageManager)
 local tweenInfo1 = TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 local tweenInfo2 = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 
-local function healthCurve(health: number, maxHealth: number, stat: number) --cubic curve
-	local b = (stat^(1/3))/maxHealth
-	return -(b*(health-maxHealth))^3 + stat
-end
-
 local GM1 = {}
 
 function GM1:Trigger(player: Player)
@@ -24,26 +19,20 @@ function GM1:Trigger(player: Player)
 	local hum = char:WaitForChild("Humanoid")
 	local root: Part = char:WaitForChild("HumanoidRootPart")
 	
-	local dmg = 0
 	local duration = 2*(timing.GetValue("Gleen", "Bare", 3, 1) - timing.GetValue("Gleen", "Bare", 1, 1))
-	
-	local maxHealth = hum.MaxHealth
-	local currentHealth = hum.Health
-	local health = maxHealth - currentHealth
 	
 	local attackData = {
 		atkdur = duration*0.5,
 		atkrad = 5,
 		atktype = "light",
-		bdmg = dmg,
-		dmg = dmg,
+		dmg = 0,
 		getTargets = true,
 		ID = 1,
 		precedent = true,
 		style = "Bare"
 	}
 	
-	local targets: {Instance} = damager:Damage(player, attackData)
+	local targets: {Humanoid} = damager:Damage(player, attackData)
 	local targetRoots = {}
 
 	for i, targetHum in ipairs(targets) do
@@ -57,14 +46,12 @@ function GM1:Trigger(player: Player)
 		return directionA < directionB
 	end)
 
-	if not targetRoots[1] or char:HasTag("Parried") then --necessary tagging for continuation-based moves
-		print("Discontinue")
+	if not targetRoots[1] or char:HasTag("Parried") then
 		char:AddTag("Discontinue") 
 		task.delay(0.1, function()
 			char:RemoveTag("Discontinue")
 		end)
 		
-		--copy and pastable move sfx code
 		local sfx = script.MissSound:Clone()
 		sfx.Parent = root
 		sfx:Play()
@@ -74,13 +61,11 @@ function GM1:Trigger(player: Player)
 		
 		return 
 	else
-		print("Continue")
 		char:AddTag("Continue")
 		task.delay(0.1, function()
 			char:RemoveTag("Continue")
 		end) 
 		
-		--copy and pastable move sfx code
 		local sfx = script.Sound:Clone()
 		sfx.Parent = root
 		sfx:Play()
@@ -92,7 +77,7 @@ function GM1:Trigger(player: Player)
 	local targetRoot: Part = targetRoots[1]
 	
 	local startingCFrame = (root.CFrame * CFrame.new(0, 5, 0)) * CFrame.Angles(-math.rad(-90), 0, 0)
-	local endingCFrame = (root.CFrame * CFrame.new(0, 1.25, 5)) * CFrame.Angles(-math.rad(-180), 0, 0)
+	local endingCFrame = (root.CFrame * CFrame.new(0, -0.5, 5)) * CFrame.Angles(-math.rad(-180), 0, 0)
 	local tweenRoot1 = TS:Create(targetRoot, tweenInfo1, {CFrame = startingCFrame})
 	local tweenRoot2 = TS:Create(targetRoot, tweenInfo2, {CFrame = endingCFrame})
 	
@@ -114,13 +99,11 @@ function GM1:Trigger(player: Player)
 				sfx:Destroy()
 			end)
 			
-			dmg = 25
 			attackData = {
 				atkdur = duration*0.5,
 				atkrad = 4,
 				atktype = "light",
-				bdmg = dmg,
-				dmg = healthCurve(health, maxHealth, dmg),
+				dmg = 25,
 				ID = 1,
 				oneHit = true,
 				origin = targetRoot,

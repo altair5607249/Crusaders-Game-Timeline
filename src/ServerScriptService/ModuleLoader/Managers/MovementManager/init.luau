@@ -32,7 +32,7 @@ local techSpecs = {
 	}
 }
 
---crude token bucket scheme that i learned as i built it for this anticheat's tolerance
+--crude token bucket scheme that i learned as i built it for this anticheat's tolerance 
 local tokenRegistry = {}
 type TokenStructure = {timeCredit: number, maxCredit: number}
 
@@ -45,7 +45,7 @@ local function maxWalkDistance(player: Player, elapsed: number, latency: number,
 	local walkSpeed: number = (char:HasTag("Running") and spacing.GetValue(crusader, 2)) or spacing.GetValue(crusader, 1)
 
 	tokenData.timeCredit = math.min(tokenData.maxCredit, tokenData.timeCredit + elapsed)
-
+	
 	local distance = ((walkSpeed * tokenData.timeCredit) + padding) * toleranceData.toleranceFactor
 
 	return distance, walkSpeed
@@ -245,7 +245,6 @@ local function registerMovement(player: Player, scope: string, mechanic: string,
 				toleranceData.toleranceFactor /= 4
 				
 				task.spawn(function()
-					print('parry frames started')
 					local initialTime = os.clock() --maybe make another function in Time that manages these sorts of timers; this is getting repetitive
 					repeat
 						task.wait()
@@ -269,7 +268,6 @@ local function registerMovement(player: Player, scope: string, mechanic: string,
 						end
 					until os.clock() - initialTime >= effectiveDuration
 					
-					print('parry frames ended')
 					toleranceData.toleranceFactor = savedTolerance
 				end)
 			end)

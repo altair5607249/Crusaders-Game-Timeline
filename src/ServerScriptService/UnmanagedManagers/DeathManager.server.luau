@@ -4,7 +4,7 @@ local remotes = RS.Remotes
 local trans = remotes.TransitionClient
 local storeChar = remotes.StoreSelection
 local selection = remotes.CharSelectionClient
-local modelName = nil
+local modelName = "Redd"
 
 storeChar.OnServerEvent:Connect(function(plr, name)
 	modelName = name

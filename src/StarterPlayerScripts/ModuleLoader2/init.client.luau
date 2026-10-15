@@ -1,27 +1,34 @@
-local CollectionService = game:GetService("CollectionService")
-local RunService = game:GetService("RunService")
+local CS = game:GetService("CollectionService")
 local UIS = game:GetService("UserInputService")
 
-for i, module in script.Modules:GetChildren() do
-	local class = require(module)
-	local name = module.Name
+local modules = script:WaitForChild("Modules")
+local M1 = require(modules:WaitForChild("M1_Client"))
+local Movement = require(modules:WaitForChild("Movement_Client"))
+local Weapon = require(modules:WaitForChild("Weapon_Client"))
 
-	local suffix = RunService:IsServer() and "_Server" or "_Client"
-	local tagName = string.sub(module.Name, 1, -#suffix - 1)
+--for Weapon_Client
+CS:GetInstanceAddedSignal("Weapon"):Connect(Weapon.new)
 
-	CollectionService:GetInstanceAddedSignal(tagName):Connect(class.new)
-
-	for i, object in CollectionService:GetTagged(tagName) do
-		if object:FindFirstAncestorOfClass("ReplicatedStorage") then continue end
-		class.new(object)
-	end
-	
-	if name == "M1_Client" then
-		print("Success")
-		UIS.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				class.ClickEvent()
-			end
-		end)
-	end
+for i, object in CS:GetTagged("Weapon") do
+	if object:FindFirstAncestorOfClass("ReplicatedStorage") then continue end
+	Weapon.new(object)
 end
+
+local dispatch = { --note to self: do not call the module functions immediately
+	[Enum.UserInputType.MouseButton1] = function() M1:Click() end,
+	[Enum.KeyCode.Q] = function() Movement:Dash() end,
+	[Enum.KeyCode.LeftShift] = function() Movement:Sprint() end,
+	[Enum.KeyCode.RightShift] = function() Movement:Sprint() end
+}
+
+UIS.InputBegan:Connect(function(input)
+	local action = dispatch[input.KeyCode]
+	if action then
+		action()
+	else
+		local action2 = dispatch[input.UserInputType]
+		if action2 then
+			action2()
+		end
+	end
+end)

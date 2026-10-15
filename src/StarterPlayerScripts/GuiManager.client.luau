@@ -1,4 +1,4 @@
---thank you 70rnk; check code below for an up-to-date version of his code
+--basis provided by 70rnk
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -38,7 +38,7 @@ local moving = false
 
 --button scripts
 local PlayButton = UI:FindFirstChild("PlayPart").SurfaceGui.TextButton
-local SelectionButton = UI:FindFirstChild("SelectionPart").SurfaceGui.TextButton
+local CreditsButton = UI:FindFirstChild("CreditsPart").SurfaceGui.TextButton
 local db = true
 local db2 = true
 
@@ -51,6 +51,7 @@ end)
 PlayButton.Activated:Connect(function()
 	if not db then
 		db = true
+		db2 = true
 		trans:FireServer()
 		task.wait(2.25)
 		controller:FireServer(true)
@@ -62,20 +63,21 @@ PlayButton.Activated:Connect(function()
 		Camera.CameraSubject = hum
 		UI:Destroy()
 		script:Destroy()
-	else
-		print("Debounce is true. Please wait for the fade-in effect to disintegrate.")
 	end
 end)
 
 --character selection
 local PG = player:WaitForChild("PlayerGui")
-local gui = PG:WaitForChild("SelectionGui")
+local gui = PG:WaitForChild("Credits")
 
-SelectionButton.Activated:Connect(function()
+CreditsButton.Activated:Connect(function()
 	if not db2 then
+		db = true
 		db2 = true
+		trans:FireServer()
+		task.wait(2.25)
 		gui.Enabled = true
-		task.wait(1)
+		db = false
 		db2 = false
 	end
 end)

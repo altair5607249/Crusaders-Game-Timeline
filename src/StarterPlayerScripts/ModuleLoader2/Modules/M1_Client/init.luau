@@ -8,8 +8,8 @@ local animator = hum:WaitForChild("Animator")
 
 local CD = char:GetAttribute("cd")
 local CD2 = CD
+local CD3 = CD + 1
 
-local UIS = game:GetService("UserInputService")
 local RS = game:GetService("ReplicatedStorage")
 local remotes = RS.Remotes
 local attack = remotes.Attack
@@ -44,36 +44,42 @@ local prevInput = 0
 local count = 0
 local db = false
 
-function m1.ClickEvent()
-	if not db then
+function m1:Click()
+	local stunned = char:GetAttribute("Stunned")
+	if not db and not stunned then
 		db = true
 		
 		--timing check
-		if tick() - prevInput <= CD2 or prevInput == 0 then
+		if tick() - prevInput <= CD3 or prevInput == 0 then
 			count += 1
-			m1:Attack()
+			m1.Attack()
 		else
 			count = 1
-			m1:Attack()
+			m1.Attack()
 		end
 		
 		--resets the combo
-		if count == 3 then
-			CD += 1
+		if count == 4 then
+			CD = CD3
 			count = 0
 		else
 			CD = CD2
 		end
 		
-		task.wait(CD)
+		task.wait(CD + 0.15)
 		db = false
-		
 		prevInput = tick()
 	end
 end
 
-function m1:Attack()
-	attack:FireServer()
+function m1.Attack()
+	local hitPart = char:WaitForChild("hitPart")
+	local atkdur = char:GetAttribute("atkdur")
+	local atkrad = char:GetAttribute("atkrad")
+	local cd = char:GetAttribute("cd")
+	local dmg = char:GetAttribute("dmg")
+	
+	attack:FireServer(hitPart, char, hum, atkdur, atkrad, cd, count, dmg)
 	
 	local animation = animations[count]
 	animation:Play()

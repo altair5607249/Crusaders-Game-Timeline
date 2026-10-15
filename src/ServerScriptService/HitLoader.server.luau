@@ -8,13 +8,13 @@ Players.PlayerAdded:Connect(function(plr)
 		local hum = char:WaitForChild("Humanoid")
 		local torso = char:WaitForChild("Torso")
 		
-		if torso then
+		if hum and torso then
 			print("Hit area being loaded!")
 			
 			local clone = hitPart:Clone()
 			clone.Parent = char
 			
-			clone.CFrame = torso.CFrame * CFrame.new(Vector3.new(0, 0, -1.15))
+			clone.CFrame = torso.CFrame * CFrame.new(Vector3.new(0, 0, -1.5))
 			
 			local weld = Instance.new("WeldConstraint")
 			weld.Part0 = torso

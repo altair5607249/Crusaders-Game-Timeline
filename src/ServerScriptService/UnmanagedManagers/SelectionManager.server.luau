@@ -19,6 +19,6 @@ local function morph(player, name)
 	end
 end
 
-selection.OnServerEvent:Connect(function(plr, str)
-	morph(plr, str)
+selection.OnServerEvent:Connect(function(plr, charName)
+	morph(plr, charName)
 end)

@@ -1,12 +1,13 @@
 local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
-local managers = ServerScriptService.Managers
 
-local WeaponManager = require(managers.WeaponManager)
-local ClickManager = require(managers.M1Manager)
-local DamageManager = require(managers.DamageManager)
+for i, manager in script.Managers:GetChildren() do
+	local class = require(manager)
+	print(class)
+end
 
+--[[ reserved for the rpg :)
 for i, module in script.Modules:GetChildren() do
 	local class = require(module)
 	
@@ -20,6 +21,7 @@ for i, module in script.Modules:GetChildren() do
 		class.new(object)
 	end
 end
+--]]
 
 --player coll group
 game.Players.PlayerAdded:Connect(function(player)

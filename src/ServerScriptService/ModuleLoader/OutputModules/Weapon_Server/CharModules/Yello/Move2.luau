@@ -21,7 +21,7 @@ function YM2:Trigger(player: Player)
 	
 	local attackData = {
 		atkdur = duration,
-		atkrad = 4.5,
+		atkrad = 4,
 		atktype = "light",
 		bypassParry = true,
 		dmg = 0,
@@ -45,7 +45,7 @@ function YM2:Trigger(player: Player)
 	
 	if char:HasTag("Godspeed") then
 		attackData.atkrad += 0.5
-		attackData.dmg = 25
+		attackData.dmg = 10
 	end
 	
 	local targets: {Humanoid} = damager:Damage(player, attackData)

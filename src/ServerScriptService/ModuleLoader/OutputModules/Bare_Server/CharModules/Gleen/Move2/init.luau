@@ -1,13 +1,16 @@
 local RS = game:GetService("ReplicatedStorage")
 local RNS = game:GetService("RunService")
 local SSS = game:GetService("ServerScriptService")
+local TS = game:GetService("TweenService")
 
 local spacing = require(RS.UniversalModules.Space)
 local timing = require(RS.UniversalModules.Time)
 
 local damager = require(SSS.ModuleLoader.Managers.DamageManager)
 
-local slashes = RS.AttackVFX.Slashes
+local delayTime = timing.GetValue("Gleen", "Bare", 1, 2)
+local duration = 2 * (timing.GetValue("Gleen", "Bare", 3, 2) - delayTime)
+local waveInfo = TweenInfo.new(duration * 0.5, Enum.EasingStyle.Circular, Enum.EasingDirection.InOut)
 
 local function healthCurve(health: number, maxHealth: number, stat: number) --cubic curve
 	local b = (stat^(1/3))/maxHealth
@@ -17,14 +20,9 @@ end
 local GM2 = {}
 
 function GM2:Trigger(player: Player)
-	print("gm2")
-	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum: Humanoid = char:WaitForChild("Humanoid")
 	local root: Part = char:WaitForChild("HumanoidRootPart")
-	
-	local dmg = 8
-	local duration = 2*(timing.GetValue("Gleen", "Bare", 3, 2) - timing.GetValue("Gleen", "Bare", 1, 2))
 	
 	local maxHealth = hum.MaxHealth
 	local currentHealth = hum.Health
@@ -32,22 +30,41 @@ function GM2:Trigger(player: Player)
 	
 	local attackData = {
 		atkdur = duration*0.5,
-		atkrad = 30,
+		atkrad = 20,
 		atktype = "light",
 		bypassParry = true,
 		dmg = 0,
 		getTargets = true,
 		ID = 2,
+		noSound = true,
 		precedent = true,
 		style = "Bare"
 	}
 	
-	--copy and pastable move sfx code
 	local sfx = script.AuxSound:Clone()
 	sfx.Parent = root
 	sfx:Play()
 	sfx.Ended:Connect(function()
 		sfx:Destroy()
+	end)
+	
+	local aura = RS.AttackVFX.EnergyWave:Clone()
+	aura.Parent = workspace
+	aura.CFrame = root.CFrame * CFrame.new(0, -2.5, 0)
+	
+	local tweenTp = TS:Create(aura, waveInfo, {Transparency = 1})
+	local tweenSize = TS:Create(aura, waveInfo, {Size = aura.Size * 8})
+	local tweenPos = TS:Create(aura, waveInfo, {CFrame = aura.CFrame * CFrame.new(0, 5, 0)})
+	
+	tweenTp:Play()
+	tweenSize:Play()
+	tweenPos:Play()
+	
+	tweenSize.Completed:Connect(function()
+		tweenSize:Destroy()
+		tweenTp:Destroy()
+		tweenPos:Destroy()
+		aura:Destroy()
 	end)
 	
 	local targets: {Humanoid} = damager:Damage(player, attackData)
@@ -65,15 +82,13 @@ function GM2:Trigger(player: Player)
 	end)
 	
 	if not targetRoots[1] then
-		print("Discontinue")
 		char:AddTag("Discontinue") 
 		task.delay(0.1, function()
 			char:RemoveTag("Discontinue")
 		end)
 		return 
 	else
-		print("Continue")
-		char:AddTag("Continue")
+		char:AddTag("Continue")  
 		task.delay(0.1, function()
 			char:RemoveTag("Continue")
 		end) 
@@ -83,11 +98,11 @@ function GM2:Trigger(player: Player)
 		atkdur = duration*0.5,
 		atkrad = 8,
 		atktype = "medium",
-		bdmg = dmg,
 		bypassParry = true,
-		dmg = healthCurve(health, maxHealth, dmg),
-		DOT = 0.3,
+		dmg = healthCurve(health, maxHealth, 13.333),
+		DOT = 0.5,
 		ID = 2,
+		noSound = true,
 		style = "Bare"
 	}
 	
@@ -95,7 +110,7 @@ function GM2:Trigger(player: Player)
 	char:AddTag("Running")
 	char:AddTag("Resistance")
 	
-	local clone = slashes:Clone()
+	local clone = RS.AttackVFX.Slashes:Clone()
 	clone.Position = root.Position
 	clone.Parent = workspace
 	

@@ -1,16 +1,34 @@
+local RS = game:GetService("ReplicatedStorage")
 local SSS = game:GetService("ServerScriptService")
-local managers = SSS.ModuleLoader.Managers
-local damager = require(managers.DamageManager)
+local TS = game:GetService("TweenService")
+
+local timing = require(RS.UniversalModules.Time)
+
+local damager = require(SSS.ModuleLoader.Managers.DamageManager)
+
+local delayTime = timing.GetValue("Redd", "Bare", 1, 2)
+local duration = timing.GetValue("Redd", "Bare", 3, 2) - delayTime
+local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+local plasmaInfo = TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+
+local function modifyDescendants(container: Model | Folder, modifier: number)
+	for i, obj: BasePart in ipairs(container:GetDescendants()) do
+		local tween = TS:Create(obj, tweenInfo, {Transparency = modifier})
+		tween:Play()
+		tween.Completed:Connect(function()
+			tween:Destroy()
+			container:Destroy()
+		end)
+	end
+end
 
 local RM2 = {}
 
 function RM2:Trigger(player: Player)
-	print("rm2")
-	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum = char:WaitForChild("Humanoid")
-	local root = char:WaitForChild("HumanoidRootPart")
-	local rightArm = char:WaitForChild("Right Arm")
+	local root: Part = char:WaitForChild("HumanoidRootPart")
+	local rightArm: Part = char:WaitForChild("Right Arm")
 	
 	local dmg = 40
 	local shockwaveDmg = 10
@@ -22,32 +40,64 @@ function RM2:Trigger(player: Player)
 	
 	local attackData = {
 		atkdur = 0.5,
-		atkrad = 4,
+		atkrad = 5,
 		atktype = "heavy",
-		bypassParry = (health < maxHealth * 0.2 and true) or false,
+		bypassParry = (health > maxHealth * 0.8 and true) or false,
+		customSound = script.Kapow,
 		dmg = dmg + health^2/(8*maxHealth),
 		ID = 2,
 		style = "Bare"
 	}
 	
-	--calibrate effects
-	local hitPart = char:WaitForChild("hitPart")
-	
-	local vfx = Instance.new("Explosion")
-	vfx.ExplosionType = Enum.ExplosionType.NoCraters
-	vfx.BlastPressure = 0 --this is purely cosmetic
-	vfx.BlastRadius = 50
-	vfx.Position = (hitPart.CFrame * CFrame.new(0, 0, -attackData.atkrad*2)).Position
-	
 	--for glowing arm
-	local glow = Instance.new("PointLight")
-	glow.Brightness = 8
-	glow.Color = Color3.new(1, 0, 0)
-	glow.Range = 10
-	glow.Shadows = false
-	glow.Parent = rightArm
+	local glow = Instance.new("ParticleEmitter")
+	glow.Parent = rightArm:FindFirstChildWhichIsA("Attachment")
 	
-	--copy and pastable move sfx code
+	--appearance
+	glow.Brightness = 8
+	glow.Color = ColorSequence.new(Color3.new(1, 0, 0.2))
+	glow.Size = NumberSequence.new(2.5, 1)
+	glow.Texture = "rbxassetid://7902140311"
+	glow.Transparency = NumberSequence.new(0.65)
+
+	--emission
+	glow.Lifetime = NumberRange.new(1)
+	glow.Rate = 40
+	glow.Rotation = NumberRange.new(0, 180)
+	glow.RotSpeed = NumberRange.new(-100, 100)
+	glow.Speed = NumberRange.new(8)
+	
+	--emittershape
+	glow.Shape = Enum.ParticleEmitterShape.Disc
+	glow.ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface
+	
+	--particles
+	glow.Drag = 1
+	glow.LockedToPart = true
+	
+	local vfx = RS.AttackVFX.PunchShockwave:Clone()
+	vfx.Parent = workspace
+	
+	--modify the shockwave
+	local dest = (root.CFrame * CFrame.Angles(0, math.rad(270), math.rad(90))) * CFrame.new(0, 2.5, 0)
+	vfx:PivotTo(dest)
+	modifyDescendants(vfx, 1)
+	
+	local alpha = Instance.new("NumberValue")
+	alpha.Value = 0.1
+	local tweenAlpha = TS:Create(alpha, tweenInfo, {Value = 30})
+	tweenAlpha:Play()
+	
+	tweenAlpha.Completed:Connect(function()
+		tweenAlpha:Destroy()
+		alpha:Destroy()
+	end)
+	
+	alpha.Changed:Connect(function(value)
+		vfx:ScaleTo(value)
+		vfx:PivotTo(dest * CFrame.new(0, value/1.5, 0))
+	end)
+	
 	local sfx = script.Sound:Clone()
 	sfx.Parent = root
 	sfx:Play()
@@ -68,11 +118,14 @@ function RM2:Trigger(player: Player)
 	}
 	
 	task.delay(delayTime, function()
-		vfx.Parent = workspace --ekkuSPLOOOSION
 		damager:Damage(player, attackData2) --shockwave
-		glow:Destroy()
-		vfx.AncestryChanged:Connect(function()
-			vfx:Destroy()
+		
+		local tweenGlow = TS:Create(glow, plasmaInfo, {Brightness = 0})
+		tweenGlow:Play()
+		
+		tweenGlow.Completed:Connect(function()
+			tweenGlow:Destroy()
+			glow:Destroy()
 		end)
 	end)
 end

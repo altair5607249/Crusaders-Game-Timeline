@@ -1,11 +1,13 @@
-local player = game:GetService("Players").LocalPlayer
+local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local RNS = game:GetService("RunService")
+
+local player = Players.LocalPlayer
 
 local spacing = require(RS.UniversalModules.Space)
 local animHandler = require(script.Parent.AnimationHandler)
 
-local crusader, char, root, hum, animator 
+local crusader, char, root: Part, hum, animator 
 local animations = script.Animations
 local animTracks = {}
 
@@ -27,7 +29,7 @@ local animSpecs = {
 	light = 1,
 	medium = 2,
 	heavy = 3,
-	reverse = 4 --give this a custom animation post-MVP
+	reverse = 4
 }
 
 local function toggleCharacterModel(character: Model, property: string, modifier: any)
@@ -45,20 +47,18 @@ end
 local knockbackHandler = {}
 
 function knockbackHandler.Casing(atktype: string, momentum: Vector3, targetRoot: Part)
-	knockbackHandler:Affect(momentum, targetRoot)
-	if atktype then
-		knockbackHandler:Effect(atktype)
+	knockbackHandler:Affect(atktype, momentum, targetRoot)
+	if not targetRoot then
+		knockbackHandler:Effect(atktype, momentum) --not really momentum in this case, but still a Vector3 value
 	end
 end
 
-function knockbackHandler:Affect(momentum: Vector3, targetRoot: Part)
-	if targetRoot then --this physics illusion method was inspired by TSB :)
+function knockbackHandler:Affect(atktype: string, momentum: Vector3, targetRoot: Part)
+	if targetRoot then --physical illusion!
 		local targetChar = targetRoot.Parent
 		
-		targetChar.Archivable = true
-		local targetClone = targetChar:Clone()
+		local targetClone: Model = targetChar:Clone()
 		targetClone.Parent = workspace
-		targetChar.Archivable = false
 		
 		for i, object in ipairs(targetClone:GetDescendants()) do
 			if object:IsA("LuaSourceContainer") then object:Destroy() end
@@ -68,9 +68,23 @@ function knockbackHandler:Affect(momentum: Vector3, targetRoot: Part)
 		toggleCharacterModel(targetChar, "Transparency", 1) --hides the real enemy model
 		
 		local cloneRoot: Part = targetClone:WaitForChild("HumanoidRootPart")
+		cloneRoot.CFrame = CFrame.lookAt(cloneRoot.Position, root.Position)
 		cloneRoot:ApplyImpulse(momentum)
 		
-		local loop
+		--applying the animation to the dummy if there is an attack type
+		local animTrack: AnimationTrack? = nil
+		if atktype then
+			local targetPlayer = Players:GetPlayerFromCharacter(targetChar)
+			local targetCrusader: string = (targetPlayer and targetPlayer:GetAttribute("Crusader")) or player:GetAttribute("Crusader")
+			
+			local targetHum: Humanoid = targetClone:WaitForChild("Humanoid")
+			local cloneAnimator: Animator = targetHum:WaitForChild("Animator")
+			animTrack = cloneAnimator:LoadAnimation(animations[targetCrusader][atktype])
+			
+			animTrack:Play()
+		end
+		
+		local loop: RBXScriptConnection? = nil
 		loop = RNS.RenderStepped:Connect(function()
 			if targetRoot and cloneRoot and targetChar:HasTag("RagdollActive") then
 				targetRoot.CFrame = targetRoot.CFrame:Lerp(cloneRoot.CFrame, 0.7)
@@ -85,7 +99,15 @@ function knockbackHandler:Affect(momentum: Vector3, targetRoot: Part)
 			until not targetChar.Parent or not targetChar:HasTag("RagdollActive")
 
 			if loop then loop:Disconnect() end
-			if targetClone then targetClone:Destroy() end
+			
+			if targetClone then
+				if animTrack then
+					animTrack:Stop()
+					animTrack:Destroy()
+				end
+				
+				targetClone:Destroy() 
+			end
 
 			if targetChar.Parent then
 				toggleCharacterModel(targetChar, "Transparency", 0) --brings back the real enemy model
@@ -96,9 +118,11 @@ function knockbackHandler:Affect(momentum: Vector3, targetRoot: Part)
 	end
 end
 
-function knockbackHandler:Effect(atktype: string)
-	local index = animSpecs[atktype]
-	animTracks[index]:Play()
+function knockbackHandler:Effect(atktype: string, whereToLook: Vector3)
+	if atktype then
+		local index = animSpecs[atktype]
+		animTracks[index]:Play()
+	end
 end
 
 return knockbackHandler

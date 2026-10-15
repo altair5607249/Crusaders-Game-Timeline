@@ -1,4 +1,5 @@
 local RS = game:GetService("ReplicatedStorage")
+local SS = game:GetService("ServerStorage")
 local SSS = game:GetService("ServerScriptService")
 local TS = game:GetService("TweenService")
 
@@ -10,6 +11,32 @@ local duration = 2*(timing.GetValue("Gleen", "Bare", 3, 3) - timing.GetValue("Gl
 local tweenInfo0 = TweenInfo.new(duration*0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 local tweenInfo1 = TweenInfo.new(0.25, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 
+local function morph(char: Model, modifier: number)
+	for i, obj in ipairs(char:GetDescendants()) do
+		if (obj:IsA("Part") or obj:IsA("MeshPart")) and obj.Name ~= "HumanoidRootPart" and obj.Name ~= "hitPart" then
+			local tween = TS:Create(obj, tweenInfo0, {Transparency = modifier})
+			tween:Play()
+			tween.Completed:Connect(function()
+				tween:Destroy()
+				if modifier == 1 then
+					char:Destroy()
+				end
+			end)
+		end
+	end
+end
+
+local positions = {
+	CFrame.new(-7.5, 0, 0) * CFrame.Angles(0, -math.rad(90), 0), --west
+	CFrame.new(7.5, 0, 0) * CFrame.Angles(0, math.rad(90), 0), --east
+	CFrame.new(0, 0, 7.5) * CFrame.Angles(0, math.rad(180), 0), --south
+	CFrame.new(0, 0, -7.5), --north
+	CFrame.new(7, 0, 7) * CFrame.Angles(0, math.rad(45), 0), --northeast
+	CFrame.new(-7, 0, -7) * CFrame.Angles(0, -math.rad(135), 0), --southwest
+	CFrame.new(7, 0, -7) * CFrame.Angles(0, math.rad(135), 0), --southeast
+	CFrame.new(-7, 0, 7) * CFrame.Angles(0, -math.rad(45), 0), --northwest
+}
+
 local GM3 = {}
 
 local function healthCurve(health: number, maxHealth: number, stat: number) --cubic curve
@@ -18,13 +45,9 @@ local function healthCurve(health: number, maxHealth: number, stat: number) --cu
 end
 
 function GM3:Trigger(player: Player)
-	print("gm3")
-	
 	local char = player.Character or player.CharacterAdded:Wait()
-	local hum = char:WaitForChild("Humanoid")
-	local root = char:WaitForChild("HumanoidRootPart")
-	
-	local dmg = 20
+	local hum: Humanoid = char:WaitForChild("Humanoid")
+	local root: Part = char:WaitForChild("HumanoidRootPart")
 	
 	local maxHealth = hum.MaxHealth
 	local currentHealth = hum.Health
@@ -34,20 +57,38 @@ function GM3:Trigger(player: Player)
 		atkdur = duration*0.5,
 		atkrad = 15,
 		atktype = "light",
-		bdmg = dmg,
-		dmg = dmg,
+		customSound = script.Heal,
+		dmg = 20,
 		getTargets = true,
 		ID = 3,
 		style = "Bare"
 	}
 	
-	--copy and pastable move sfx code
-	local sfx = script.AuxSound:Clone()
-	sfx.Parent = root
-	sfx:Play()
-	sfx.Ended:Connect(function()
-		sfx:Destroy()
-	end)
+	for i = 1, 8 do
+		local clone: Model? = nil
+		local crusader: string = player:GetAttribute("Crusader") --in case this move is being copied
+		
+		if crusader == "Bluee" then --for the copycat
+			clone = char:Clone()
+		else --for Gleen himself
+			local skin = player:GetAttribute("Skin")
+			if skin == "Sage" then
+				clone = SS.Characters.Gleen.Suit:Clone()
+			else
+				clone = SS.Characters.Gleen.Sage:Clone()
+			end
+		end
+		
+		clone.Parent = workspace
+		
+		if clone.Humanoid then clone.Humanoid:AddTag("Immortal") end
+		if clone.HumanoidRootPart then 
+			clone.HumanoidRootPart.Anchored = true
+			clone.HumanoidRootPart.CFrame = root.CFrame * positions[i] 
+		end
+		
+		morph(clone, 1)
+	end
 	
 	local targets: {Humanoid} = damager:Damage(player, attackData)
 	local targetRoots = {}
@@ -73,13 +114,6 @@ function GM3:Trigger(player: Player)
 		char:AddTag("Continue")
 		task.delay(0.1, function()
 			char:RemoveTag("Continue")
-		end)
-		
-		local sfx = script.Sound:Clone()
-		sfx.Parent = root
-		sfx:Play()
-		sfx.Ended:Connect(function()
-			sfx:Destroy()
 		end)
 	end
 	
@@ -114,7 +148,7 @@ function GM3:Trigger(player: Player)
 	local tweenGlowUp = TS:Create(glow, tweenInfo1, {Brightness = 8})
 	local tweenGlowDown = TS:Create(glow, tweenInfo1, {Brightness = 0})
 	
-	hum.Health += healthCurve(health, maxHealth, dmg)
+	hum.Health += healthCurve(health, maxHealth, attackData.dmg)
 	
 	local endingCFrame = targetRoot.CFrame * CFrame.new(0, 0, 5)
 	local tweenGleen = TS:Create(root, tweenInfo0, {CFrame = endingCFrame})

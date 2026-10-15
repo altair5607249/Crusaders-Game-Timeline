@@ -67,8 +67,6 @@ function YM1:Trigger(player: Player)
 
 	if not result then return end
 	
-	print(result.Name)
-	
 	local attackData = {
 		atkdur = duration,
 		atkrad = 2.5,
@@ -77,6 +75,7 @@ function YM1:Trigger(player: Player)
 		ID = 1,
 		oneHit = true,
 		origin = CFrame.new(result.Position),
+		soundTarget = result.Instance,
 		style = "Bare"
 	}
 

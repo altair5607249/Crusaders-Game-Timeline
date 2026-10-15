@@ -26,11 +26,7 @@ preloadAllVFX() --loads vfx before player is declared to be ready
 remotes.ClientReadiness:FireServer(true)
 
 local IAS = require(player.PlayerScripts.Energy)
-
---fix architecture later
-local handlers = script.Handlers
-local stun = require(handlers.StunHandler)
-local kb = require(handlers.KnockbackHandler)
+local kb = require(script.Handlers.KnockbackHandler)
 
 local modules = script.InputModules
 
@@ -44,14 +40,7 @@ end
 repeat task.wait() until player:HasTag("StartingScreenActive")
 repeat task.wait() until not player:HasTag("StartingScreenActive")
 
-print(inputMods)
-
 IAS:Init(inputMods) --initial spawn
-
---fix architecture later
-remotes.ToggleStun.OnClientEvent:Connect(function(atktype: string, switch: boolean)
-	stun:Toggle(atktype, switch)
-end)
 
 remotes.Knockback.OnClientEvent:Connect(function(atktype: string, momentum: Vector3, targetRoot: Part)
 	kb.Casing(atktype, momentum, targetRoot)

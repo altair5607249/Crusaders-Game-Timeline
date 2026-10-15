@@ -14,12 +14,8 @@ local tweenInfo2 = TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDir
 local BM1 = {}
 
 function BM1:Trigger(player: Player)
-	print("bm1")
-	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local root: Part = char:WaitForChild("HumanoidRootPart")
-	
-	local dmg = 55
 	
 	local characterList = CS:GetTagged("Character")
 	local filtered = {}
@@ -65,7 +61,6 @@ function BM1:Trigger(player: Player)
 	tweenRend:Play()
 	tweenRend2:Play()
 	
-	--copy and pastable move sfx code
 	local sfx = script.Sound:Clone()
 	sfx.Parent = root
 	sfx:Play()
@@ -85,10 +80,12 @@ function BM1:Trigger(player: Player)
 		atkdur = duration,
 		atkrad = 2.5,
 		atktype = "heavy",
-		dmg = dmg,
+		customSound = script.Rip,
+		dmg = 60,
 		ID = 1,
 		oneHit = true,
 		origin = CFrame.new(result.Position),
+		soundTarget = result.Instance,
 		style = "Bare"
 	}
 	

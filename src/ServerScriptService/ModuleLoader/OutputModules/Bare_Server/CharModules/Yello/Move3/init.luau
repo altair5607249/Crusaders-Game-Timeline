@@ -12,8 +12,6 @@ local vfx = RS.AttackVFX.Lightning
 local YM3 = {}
 
 function YM3:Trigger(player: Player)
-	print("ym3")
-	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum: Humanoid = char:WaitForChild("Humanoid")
 	local root = char:WaitForChild("HumanoidRootPart")
@@ -22,11 +20,12 @@ function YM3:Trigger(player: Player)
 	
 	local attackData = {
 		atkdur = duration,
-		atkrad = 20,
+		atkrad = 10,
 		atktype = "heavy", --supposed to be custom, change after MVP phase
 		bypassParry = true,
 		dmg = 50,
 		ID = 3,
+		noSound = true,
 		origin = root,
 		style = "Bare"
 	}
@@ -40,7 +39,6 @@ function YM3:Trigger(player: Player)
 		hum:SetAttribute("Stamina", stamina - cost)
 	end
 	
-	--copy and pastable move sfx code
 	local sfx = script.Sound:Clone()
 	sfx.Parent = root
 	sfx:Play()
@@ -53,8 +51,12 @@ function YM3:Trigger(player: Player)
 	local clone = vfx:Clone()
 	local base = clone:FindFirstChild("Base")
 	local top = clone:FindFirstChild("Part")
+	local cloud = clone:FindFirstChild("Cloud")
+	
 	base.Position = Vector3.new(root.Position.X, root.Position.Y - 3, root.Position.Z)
 	top.Position = Vector3.new(root.Position.X, root.Position.Y + 256, root.Position.Z)
+	cloud.Position = top.Position
+	
 	local lightning = base:FindFirstChild("Attachment"):FindFirstChild("Beam")
 	
 	clone.Parent = workspace

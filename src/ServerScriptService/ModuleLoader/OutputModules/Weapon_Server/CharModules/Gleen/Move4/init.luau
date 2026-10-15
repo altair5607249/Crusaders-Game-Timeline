@@ -15,7 +15,7 @@ local delayTime = timing.GetValue("Gleen", "Weapon", 1, 4)
 local duration = timing.GetValue("Gleen", "Weapon", 3, 4) - delayTime
 local endlag = 0.5
 
-local jumpDistance = 50
+local jumpDistance = 40
 local jumpInfo = TweenInfo.new(duration - endlag, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
 local GM4 = {}
@@ -33,12 +33,13 @@ function GM4:Trigger(player: Player)
 
 	local attackData = {
 		atkdur = endlag,
-		atkrad = 10,
+		atkrad = 8,
 		atktype = "heavy",
 		bypassParry = true,
 		dmg = 60,
 		ID = 4,
 		style = "Weapon",
+		noSound = true,
 		origin = root 
 	}
 

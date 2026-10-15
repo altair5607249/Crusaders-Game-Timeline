@@ -12,19 +12,19 @@ local timing = require(RS.UniversalModules.Time)
 
 local weaponQuirks = {
 	Redd = {
-		dmg = 3,
+		dmg = 1.25,
 		range = 2
 	},
 	Yello = {
-		dmg = 1,
+		dmg = 0.85,
 		range = 3.5
 	},
 	Gleen = {
-		dmg = 2,
+		dmg = 0.95,
 		range = 2.75
 	},
 	Bluee = {
-		dmg = 3,
+		dmg = 1,
 		range = 2.5
 	}
 }
@@ -85,14 +85,6 @@ function m1Manager.Action(player: Player, index: number)
 	
 	local root: Part = char:FindFirstChild("HumanoidRootPart")
 	local duration: number = timing.GetValue(crusader, "M1", 3, index) - timing.GetValue(crusader, "M1", 1, index)
-	
-	local sfx = script.MissSound:Clone() --could be a miss sound, but it's mostly sfx for charging the punch
-	sfx.Parent = root
-	sfx.PlaybackSpeed = (sfx.TimeLength / duration) + 0.05 --for insurance that the sounds dont clash
-	sfx:Play()
-	sfx.Ended:Connect(function()
-		sfx:Destroy()
-	end)
 		
 	local delayTime = timing.GetValue(crusader, "M1", 1, index)
 	local duration = timing.GetValue(crusader, "M1", 3, index) - delayTime
@@ -108,6 +100,7 @@ function m1Manager.Action(player: Player, index: number)
 		atkdur = duration,
 		atkrad = 3.5,
 		atktype = (index == 4 and "heavy") or "light", --see stun manager for time references
+		customSound = (index == 4 and script.Heavy) or nil,
 		dmg = (dmg + 0.5*(index-1)^2) + addend, --dmg calculations (parabolic curve)
 		getTargets = true,
 		ID = index,
@@ -128,22 +121,6 @@ function m1Manager.Action(player: Player, index: number)
 				if char:HasTag("Godspeed") then 
 					local stamina = hum:GetAttribute("Stamina")
 					hum:SetAttribute("Stamina", stamina + 6) 
-				end
-				
-				if attackData.atktype == "light" then
-					local sfx = script.Sound:Clone()
-					sfx.Parent = root
-					sfx:Play()
-					sfx.Ended:Connect(function()
-						sfx:Destroy()
-					end)
-				else
-					local sfx = script.AuxSound:Clone()
-					sfx.Parent = root
-					sfx:Play()
-					sfx.Ended:Connect(function()
-						sfx:Destroy()
-					end)
 				end
 			end
 		end)	

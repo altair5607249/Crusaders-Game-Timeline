@@ -21,21 +21,14 @@ function RM1:Trigger(player: Player)
 	
 	local attackData = {
 		atkdur = duration,
-		atkrad = 4,
+		atkrad = 5,
 		atktype = "medium",
 		bypassParry = (currentHealth < maxHealth/2 and true) or nil,
+		customSound = script.Sound,
 		dmg = 35,
 		ID = 1,
 		style = "Bare"
 	}
-	
-	--copy and pastable move sfx code
-	local sfx = script.Sound:Clone()
-	sfx.Parent = root
-	sfx:Play()
-	sfx.Ended:Connect(function()
-		sfx:Destroy()
-	end)
 	
 	damager:Damage(player, attackData) --main hit
 end

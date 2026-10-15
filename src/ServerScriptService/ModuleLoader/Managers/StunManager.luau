@@ -16,11 +16,12 @@ local stunPriority = {
 local stunManager = {}
 
 function stunManager.Eval(player: Player, atktype: string, duration: number, source: string) --can be called instead of DurReg if caller already has a duration in mind
-	if player == nil then return end
+	if player == nil or player.Parent ~= Players then return end
 	
 	local crusader = player:GetAttribute("Crusader")
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum: Humanoid = char:WaitForChild("Humanoid")
+	local head: Part = char:WaitForChild("Head")
 	
 	if not char:GetAttribute("Stunned") then
 		if char:HasTag("LoadingAttack") and atktype == "heavy" then char:AddTag("CancellingAttack") end
@@ -33,7 +34,7 @@ function stunManager.Eval(player: Player, atktype: string, duration: number, sou
 		char:SetAttribute("StunTime", duration)
 	end
 	
-	if atktype then char:SetAttribute("StunType", atktype) end --stores the most recent valid atktype
+	if atktype then char:SetAttribute("StunType", atktype) end
 	
 	local previousSource = char:GetAttribute("StunSource")
 	if not previousSource or stunPriority[source] > stunPriority[previousSource] then char:SetAttribute("StunSource", source) end
@@ -53,8 +54,6 @@ function stunManager.Eval(player: Player, atktype: string, duration: number, sou
 
 			if player.Parent ~= Players then return end
 
-			toggle:FireClient(player, char:GetAttribute("StunType"), false)
-
 			char:SetAttribute("Stunned", false)
 			char:SetAttribute("StunTime", nil)
 			char:SetAttribute("StunExt", nil)
@@ -68,13 +67,20 @@ function stunManager.Eval(player: Player, atktype: string, duration: number, sou
 			else
 				hum.WalkSpeed = spacing.GetValue(crusader, 1)
 			end 
+			
+			if head:FindFirstChild("Static") then head:FindFirstChild("Static"):Destroy() end
 		end)
 	end
 
 	if not char:GetAttribute("StunStart") then --makes sure of legitimate pairing
 		char:SetAttribute("StunStart", true)
-		toggle:FireClient(player, atktype, true)
 		if char:HasTag("Running") then char:RemoveTag("Running") end
+		
+		if stunPriority[source] == "Hit" then
+			local static = RS.AttackVFX.Static:Clone()
+			static.Parent = head
+			static.CFrame = head.CFrame
+		end
 	end
 end
 

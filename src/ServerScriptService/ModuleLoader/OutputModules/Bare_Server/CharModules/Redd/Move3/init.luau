@@ -9,12 +9,11 @@ local timing = require(RS.UniversalModules.Time)
 
 local delayTime = timing.GetValue("Redd", "Bare", 3, 3) - timing.GetValue("Redd", "Bare", 1, 3)
 local tweenInfo = TweenInfo.new(delayTime, Enum.EasingStyle.Cubic, Enum.EasingDirection.InOut)
+local fireInfo = TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 
 local RM3 = {}
 
 function RM3:Trigger(player: Player)
-	print("rm3")
-	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum = char:WaitForChild("Humanoid")
 	local root: Part = char:WaitForChild("HumanoidRootPart")
@@ -34,6 +33,7 @@ function RM3:Trigger(player: Player)
 		expanding = 1.48599,
 		ID = 3,
 		noKB = true,
+		noSound = true,
 		origin = root,
 		style = "Bare"
 	}
@@ -48,16 +48,21 @@ function RM3:Trigger(player: Player)
 	handle.Transparency = 0.99
 	handle.Parent = workspace
 	
-	local vfx = Instance.new("ParticleEmitter")
-	vfx.Texture = "rbxassetid://4977919056"
-	vfx.Brightness = 1
-	vfx.Drag = 1.25
-	vfx.Rate = 75
-	vfx.Shape = Enum.ParticleEmitterShape.Sphere
-	vfx.Size = NumberSequence.new(2, 1)
-	vfx.Speed = NumberRange.new(10, 20)
-	vfx.WindAffectsDrag = true
-	vfx.Parent = handle
+	--fireeeee
+	local holder = RS.AttackVFX.Fire:Clone()
+	local fire: ParticleEmitter?, smoke: ParticleEmitter?
+	
+	for _, obj in ipairs(holder:GetChildren()) do
+		obj.Parent = handle
+		
+		if obj.Name == "Particles" then
+			fire = obj
+		elseif obj.Name == "Smoke" then
+			smoke = obj
+		end
+	end
+	
+	holder:Destroy()
 	
 	local sfoth = Instance.new("Decal")
 	sfoth.Texture = "rbxassetid://11464629646"
@@ -78,7 +83,6 @@ function RM3:Trigger(player: Player)
 	
 	hum:TakeDamage(currentHealth/8)
 	
-	--copy and pastable move sfx code
 	local sfx = script.Sound:Clone()
 	sfx.Parent = root
 	sfx:Play()
@@ -87,8 +91,36 @@ function RM3:Trigger(player: Player)
 	end)
 	
 	tweenSize.Completed:Connect(function()
-		if handle then handle:Destroy() end
 		tweenSize:Destroy()
+	end)
+	
+	local alpha = Instance.new("NumberValue")
+	alpha.Parent = fire
+	alpha.Changed:Connect(function(value)
+		fire.Size = NumberSequence.new(value)
+	end)
+
+	local beta = Instance.new("NumberValue")
+	beta.Parent = fire
+	beta.Changed:Connect(function(value)
+		fire.Transparency = NumberSequence.new(value)
+		smoke.Transparency = NumberSequence.new(value)
+		sfoth.Transparency = value
+	end)
+
+	local tweenAlpha = TS:Create(alpha, tweenInfo, {Value = 5})
+	tweenAlpha:Play()
+
+	tweenAlpha.Completed:Connect(function()
+		tweenAlpha:Destroy()
+
+		local tweenBeta = TS:Create(beta, fireInfo, {Value = 1})
+		tweenBeta:Play()
+
+		tweenBeta.Completed:Connect(function()
+			tweenBeta:Destroy()
+			handle:Destroy()
+		end)
 	end)
 end
 

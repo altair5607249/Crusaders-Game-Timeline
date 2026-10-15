@@ -22,6 +22,8 @@ local techRegistry, frontDash
 local sprintConnection: RBXScriptConnection? = nil --moved to module scope so it persists across Sprint() calls
 local activeDashLoop: RBXScriptConnection? = nil --prevents overlapping dash loops from fighting over velocity
 
+local movement = {}
+
 local function onCharacterChanged()
 	crusader = player:GetAttribute("Crusader")
 	char = player.Character or player.CharacterAdded:Wait()
@@ -36,7 +38,7 @@ local function onCharacterChanged()
 		AuxDash = 0,
 		Parry = 0
 	}
-	
+
 	frontDash = false
 
 	for i, anim in pairs(animsTable) do
@@ -50,8 +52,6 @@ player.CharacterAdded:Connect(function()
 	onCharacterChanged() --callback in case of respawn and/or character swap
 end)
 
-local movement = {}
-
 local techSpecs = {
 	FrontDash = 1,
 	AuxDash = 2,
@@ -62,7 +62,7 @@ function movement.Dash(dashDur: number, direction: Vector3)
 	local stamina: number = hum:GetAttribute("Stamina")
 	if stamina <= 0 then return end --no stamina, no dice
 	if char:HasTag("ActiveInput") then return end
-	if char:HasTag("TechsDisabled") then return end
+	if char:HasTag("TechsDisabled") or char:GetAttribute("Stunned") then return end
 	
 	local anim: Animation?, name: string?
 	
@@ -107,7 +107,7 @@ function movement.Dash(dashDur: number, direction: Vector3)
 	end
 	
 	local constraint = timing.GetValue(crusader, "Tech", 2, techSpecs[name])
-	if timing.CheckConstraint(techRegistry[name], constraint) or char:GetAttribute("Stunned") then return end
+	if timing.CheckConstraint(techRegistry[name], constraint) then return end
 	
 	char:AddTag("ActiveInput")
 
@@ -140,12 +140,11 @@ function movement.Dash(dashDur: number, direction: Vector3)
 end
 
 function movement.Sprint(sprinting: boolean)
-	if char:HasTag("TechsDisabled") then return end
+	if char:HasTag("TechsDisabled") or char:GetAttribute("Stunned") then return end
 	
 	RS.Remotes.MovementTrigger:FireServer("runSpecs", "Sprint", sprinting)
 
 	if sprinting and hum:GetAttribute("Stamina") > 0 then
-		print("Sprinting")
 		fovUp:Play()
 		hum.WalkSpeed = runSpd
 
@@ -166,7 +165,7 @@ end
 
 function movement.Parry(anim: Animation) 
 	if char:HasTag("ActiveInput") then return end
-	if char:HasTag("TechsDisabled") then return end
+	if char:HasTag("TechsDisabled") or char:GetAttribute("Stunned") then return end
 	
 	local name = "Parry"
 	local constraint = timing.GetValue(crusader, "Tech", 2, techSpecs[name])

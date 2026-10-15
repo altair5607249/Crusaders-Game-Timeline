@@ -16,7 +16,7 @@ local equipEvent = RS.Remotes.EquipWeapon
 local bareStyle = RS.InputContexts.BareContext
 local weaponStyle = RS.InputContexts.WeaponContext
 
-local defaultStyle
+local defaultStyle = bareStyle --characters will not spawn in with their weapon equipped
 
 local crusader, char, hum, animator
 local bareAnimTracks, weaponAnimTracks
@@ -30,11 +30,12 @@ RS.Remotes.CopyMove.OnClientEvent:Connect(function(copiedCrusader: string, move:
 	Sol.Input(move, style, copiedCrusader)
 end)
 
-local initialSpawn = true
-
 local function onCharacterChanged()
-	IAS:Disconnect(IAS:GetActiveContexts())
-	defaultStyle = bareStyle
+	if defaultStyle == weaponStyle then 
+		IAS:Disconnect({defaultStyle}) 
+		defaultStyle = bareStyle
+		Sol.IAS()
+	end
 
 	crusader = player:GetAttribute("Crusader")
 	animHandler:ClearCache()
@@ -49,12 +50,6 @@ local function onCharacterChanged()
 	weaponRegistry = {0, 0, 0, 0}
 
 	swapRegistry = 0
-	
-	if initialSpawn then
-		initialSpawn = false
-	else
-		Sol.IAS()
-	end
 end
 
 if player.Character then onCharacterChanged() end --covers the case where the player's character already exists before this script runs
@@ -193,7 +188,9 @@ function Sol.SwitchStyle(style: InputContext)
 		local connection: RBXScriptConnection?
 		connection = listener:Connect(function(instance)
 			if instance == char then
+				IAS:Disconnect({currentStyle})
 				defaultStyle = style
+				Sol.IAS()
 				connection:Disconnect()
 			end
 		end)

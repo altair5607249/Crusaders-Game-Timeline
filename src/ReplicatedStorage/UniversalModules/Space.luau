@@ -3,15 +3,15 @@
 local configTable = {
 	--1 = bspd, 2 = sspd/tolerance divisor, 3 = dmg query's basis
 	Redd = {16, 24, 5},
-	Yello = {15, 25, 4},
-	Gleen = {18, 22, 6},
-	Bluee = {17, 23, 5}
+	Yello = {15.5, 25, 4.85},
+	Gleen = {17, 22, 4.95},
+	Bluee = {16.5, 23, 4.9}
 }
 
 local kbSpecs = {
 	light = 4.5,
 	medium = 2.75,
-	heavy = 1.25,
+	heavy = 1.05,
 	reverse = -3
 }
 
@@ -56,7 +56,7 @@ function Space.Knockback(attackerRoot: Part, targetRoot: Part, atktype: string)
 	local direction = -(attackerRoot.Position - targetRoot.Position).Unit
 	
 	local base = kbSpecs.medium
-	local velocity: Vector3 = ((direction*100) - direction*((base^modifier)/base)) * (base/modifier)
+	local velocity: Vector3 = ((direction*100) - direction*((base^modifier)/base)) * (base/modifier) --random formula i made up based on feel
 	
 	return velocity
 end

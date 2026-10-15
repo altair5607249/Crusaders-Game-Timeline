@@ -23,14 +23,16 @@ local function resetOptions()
 	weaponOptions = {1, 2, 3}
 end
 
+local m1 = {}
+
 local function onCharacterChanged()
 	crusader = player:GetAttribute("Crusader")
-	
+
 	resetOptions()
-	
+
 	prevInput, count, db = 0, 0, false
 	comboExtension = timing.GetValue(crusader, "M1", 3, 1) + 0.5
-	
+
 	char = player.Character or player.CharacterAdded:Wait()
 	hum = char:WaitForChild("Humanoid")
 	root = char:WaitForChild("HumanoidRootPart")
@@ -44,8 +46,6 @@ if player.Character then onCharacterChanged() end --covers the case where the pl
 player.CharacterAdded:Connect(function()
 	onCharacterChanged() --callback in case of respawn and/or character swap
 end)
-
-local m1 = {}
 
 function m1.Click()
 	if not db then

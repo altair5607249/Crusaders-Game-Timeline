@@ -25,6 +25,7 @@ function GM1:Trigger(player: Player)
 		atkdur = duration*0.5,
 		atkrad = 5,
 		atktype = "light",
+		customSound = script.MissSound,
 		dmg = 0,
 		getTargets = true,
 		ID = 1,
@@ -50,13 +51,6 @@ function GM1:Trigger(player: Player)
 		char:AddTag("Discontinue") 
 		task.delay(0.1, function()
 			char:RemoveTag("Discontinue")
-		end)
-		
-		local sfx = script.MissSound:Clone()
-		sfx.Parent = root
-		sfx:Play()
-		sfx.Ended:Connect(function()
-			sfx:Destroy()
 		end)
 		
 		return 
@@ -91,30 +85,28 @@ function GM1:Trigger(player: Player)
 			targetRoot.AssemblyLinearVelocity = Vector3.zero
 			targetRoot.AssemblyAngularVelocity = Vector3.zero
 			
-			--copy and pastable move sfx code
-			local sfx = script.AuxSound:Clone()
-			sfx.Parent = root
-			sfx:Play()
-			sfx.Ended:Connect(function()
-				sfx:Destroy()
-			end)
-			
 			attackData = {
 				atkdur = duration*0.5,
 				atkrad = 4,
 				atktype = "light",
+				customSound = script.AuxSound,
 				dmg = 25,
 				ID = 1,
 				oneHit = true,
 				origin = targetRoot,
+				soundTarget = targetRoot,
 				style = "Bare"
 			}
 			
 			damager:Damage(player, attackData)
 			
+			local targetChar: Model = targetRoot.Parent
+			targetChar:AddTag("Immortal") --i-frames
+			
 			local hitstun = timing.GetValue("Gleen", "Bare", 4, 1)
 			task.delay(hitstun, function()
 				targetRoot.Anchored = false
+				targetChar:RemoveTag("Immortal")
 			end)
 		end)
 	end)

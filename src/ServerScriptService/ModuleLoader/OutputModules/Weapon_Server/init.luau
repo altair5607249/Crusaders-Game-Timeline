@@ -27,7 +27,7 @@ end
 
 local namespace = {
 	Redd = {"Feint", "Supernova", "Blade Parade", "Chanticleer Counter"},
-	Yello = {"Lasso", "Strobe", "Breakaway", "Borean Blitz"},
+	Yello = {"Lasso", "Lighthouse", "Breakaway", "Borean Blitz"},
 	Gleen = {"Yeet", "Accretion Disk", "Anchor Point", "Ghillie Groundbreaker"},
 	Bluee = {"Rend", "Oumuamua", "Sword Trick", "Protean Pace"}
 }

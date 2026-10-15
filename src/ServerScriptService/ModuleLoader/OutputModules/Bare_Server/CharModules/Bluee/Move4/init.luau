@@ -1,4 +1,5 @@
 --this is the most complicated move in the game...
+local debby = game:GetService("Debris")
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local SSS = game:GetService("ServerScriptService")
@@ -69,13 +70,13 @@ end)
 local BM4 = {}
 
 function BM4:Trigger(player: Player)
-	print("bm4")
-	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum = char:WaitForChild("Humanoid")
 	local root = char:WaitForChild("HumanoidRootPart")
 	
-	--copy and pastable move sfx code
+	char:AddTag("SolDisabled")
+	char:AddTag("TechsDisabled")
+	
 	local sfx = script.Sound:Clone()
 	sfx.Parent = root
 	sfx:Play()
@@ -103,6 +104,13 @@ function BM4:Trigger(player: Player)
 	char:AddTag("Resistance")
 
 	local targets: {Humanoid} = damager:Damage(player, attackData)
+	
+	if not targets or #targets == 0 then --guard clause
+		char:RemoveTag("SolDisabled")
+		char:RemoveTag("TechsDisabled")
+		return 
+	end 
+	
 	local targetRoots = {}
 
 	for i, targetHum in ipairs(targets) do
@@ -122,9 +130,14 @@ function BM4:Trigger(player: Player)
 		if targetPlayer ~= nil then break end
 	end
 	
-	if not targetPlayer or targetPlayer.Parent ~= Players or player.Parent ~= Players then return end --phase two
+	if not targetPlayer or targetPlayer.Parent ~= Players or player.Parent ~= Players then 
+		char:RemoveTag("SolDisabled")
+		char:RemoveTag("TechsDisabled")
+		return 
+	end
 	
-	--copy and pastable move sfx code
+	--phase two!!
+	
 	local sfx = script.AuxSound:Clone()
 	sfx.Parent = root
 	sfx:Play()
@@ -132,7 +145,8 @@ function BM4:Trigger(player: Player)
 		sfx:Destroy()
 	end)
 	
-	local targetHum: Humanoid = targetPlayer.Character:WaitForChild("Humanoid")
+	local targetChar: Model? = targetPlayer.Character
+	local targetHum: Humanoid = targetChar:WaitForChild("Humanoid")
 	char:RemoveTag("Resistance")
 	
 	hum:AddTag("Immortal") --adding i-frames
@@ -141,6 +155,9 @@ function BM4:Trigger(player: Player)
 	--whoever loses is stuck with these recovery frames
 	stunManager.Eval(player, nil, duration, "Recovery")
 	stunManager.Eval(targetPlayer, nil, duration, "Recovery")
+	
+	char:RemoveTag("SolDisabled")
+	char:RemoveTag("TechsDisabled")
 	
 	sendParlay:FireClient(player, duration*0.4)
 	sendParlay:FireClient(targetPlayer, duration*0.4)
@@ -155,26 +172,66 @@ function BM4:Trigger(player: Player)
 	if not result1 then result1 = options[math.random(1, 2)].name end --no one would
 	if not result2 then result2 = options[math.random(1, 2)].name end --bet on sides
 	
-	local randomFlip = flipCoin(options) --phase three
+	local randomFlip = flipCoin(options) --phase three!!!
 	
 	task.delay(duration*0.24, function()
 		hum:RemoveTag("Immortal") --removing i-frames
 		targetHum:RemoveTag("Immortal") --for both players
 		
 		if result1 == result2 then
-			print("Both made the same bet! No show!")
 			char:SetAttribute("StunTime", 0)
 			targetHum.Parent:SetAttribute("StunTime", 0)
-			return --nothing happens (will be made cooler post-MVP phase)
+			
+			local winnerLight1 = Instance.new("Highlight")
+			winnerLight1.FillColor = Color3.new(0, 1, 0)
+			winnerLight1.Parent = char
+			
+			local winnerLight2 = Instance.new("Highlight")
+			winnerLight2.FillColor = Color3.new(0, 1, 0)
+			winnerLight2.Parent = targetChar
+
+			debby:AddItem(winnerLight1, 2.5)
+			debby:AddItem(winnerLight2, 2.5)
+			
+			return
 		else
 			if randomFlip == result1 then --Bluee won
 				char:SetAttribute("StunTime", 0) --ends stun early for winner and leaves loser in recovery frames
 				targetHum:TakeDamage(targetHum.Health/8)
+				
+				local winnerLight = Instance.new("Highlight")
+				winnerLight.FillColor = Color3.new(0, 1, 0)
+				winnerLight.Parent = char
+				
+				local loserLight = Instance.new("Highlight")
+				loserLight.Parent = targetChar
+				
+				debby:AddItem(winnerLight, 2.5)
+				debby:AddItem(loserLight, 2.5)
+				
 			elseif randomFlip == result2 then --other Crusader won
 				targetHum.Parent:SetAttribute("StunTime", 0) --ends stun early for winner and leaves loser in recovery frames
 				hum:TakeDamage(hum.Health/8)
+				
+				local winnerLight = Instance.new("Highlight")
+				winnerLight.FillColor = Color3.new(0, 1, 0)
+				winnerLight.Parent = targetChar
+
+				local loserLight = Instance.new("Highlight")
+				loserLight.Parent = char
+
+				debby:AddItem(winnerLight, 2.5)
+				debby:AddItem(loserLight, 2.5)
+				
 			else --if both picked different options and neither won (yes, this can happen with three choices)
-				print("Neither player won!")
+				local loserLight1 = Instance.new("Highlight")
+				loserLight1.Parent = char
+				
+				local loserLight2 = Instance.new("Highlight")
+				loserLight2.Parent = targetChar
+
+				debby:AddItem(loserLight1, 2.5)
+				debby:AddItem(loserLight2, 2.5)
 			end
 		end
 	end)

@@ -26,9 +26,9 @@ function YM1:Trigger(player: Player)
 	
 	local attackData = {
 		atkdur = duration - retraction,
-		atkrad = 4,
+		atkrad = 3,
 		atktype = "light",
-		dmg = 10,
+		dmg = 20,
 		getTargets = true,
 		ID = 1,
 		origin = extendedHitbox,

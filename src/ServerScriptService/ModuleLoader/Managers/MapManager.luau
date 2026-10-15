@@ -23,7 +23,7 @@ local notify = RS.Remotes.MapChange
 local countdown = RS.Remotes.MapCountdown
 
 local mapInfo = {
-	["Cyberpunk City"] = "Animateria",
+	["Cyberpunk City"] = "Animateria & InstantlyBread",
 	Woodlands = "Infexornn & CorruptTypes",
 	Winterness = "InstantlyBread",
 	["City 17"] = "Valve Software",
@@ -37,12 +37,12 @@ local mapInfo = {
 
 local skyboxes = {
 	["Cyberpunk City"] = {
-		Bk = "rbxassetid://127055403979183",
-		Dn = "rbxassetid://125960730452992",
-		Ft = "rbxassetid://73242054782524",
-		Lf = "rbxassetid://117870344890139",
-		Rt = "rbxassetid://135150831204575",
-		Up = "rbxassetid://110238129137125",
+		Bk = "rbxassetid://17124357467",
+		Dn = "rbxassetid://17124359797",
+		Ft = "rbxassetid://17124362093",
+		Lf = "rbxassetid://17124365127",
+		Rt = "rbxassetid://17124367200",
+		Up = "rbxassetid://17124369657",
 	},
 
 	Woodlands = {

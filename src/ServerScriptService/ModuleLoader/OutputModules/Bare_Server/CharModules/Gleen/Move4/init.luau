@@ -12,13 +12,12 @@ local movement = require(SSS.ModuleLoader.Managers.MovementManager)
 local GM4 = {}
 
 function GM4:Trigger(player: Player)
-	print("gm4")
-
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum: Humanoid = char:WaitForChild("Humanoid")
 	local root: Part = char:WaitForChild("HumanoidRootPart")
 	
 	char:AddTag("SolDisabled")
+	char:AddTag("TechsDisabled")
 	
 	if char:HasTag("HitFinished") then char:RemoveTag("HitFinished") end
 	
@@ -27,7 +26,8 @@ function GM4:Trigger(player: Player)
 	local attackData = {
 		atkdur = duration,
 		atkrad = 8,
-		atktype = "heavy",
+		atktype = "light",
+		customSound = script.Boom,
 		dmg = 40,
 		ID = 4,
 		oneHit = true,
@@ -36,13 +36,9 @@ function GM4:Trigger(player: Player)
 
 	damager:Damage(player, attackData)
 
-	--copy and pastable move sfx code
 	local sfx = script.Sound:Clone()
 	sfx.Parent = root
 	sfx:Play()
-	sfx.Ended:Connect(function()
-		sfx:Destroy()
-	end)
 
 	local att0 = Instance.new("Attachment")
 	local att1 = Instance.new("Attachment")
@@ -56,10 +52,10 @@ function GM4:Trigger(player: Player)
 	trail.Texture = "rbxassetid://5699911427"
 
 	--customizations
-	trail.Brightness = 1
+	trail.Brightness = 8
 	trail.Color = ColorSequence.new(Color3.new(0, 1, 0))
 	trail.FaceCamera = true
-	trail.Lifetime = duration
+	trail.Lifetime = duration/4
 	trail.LightInfluence = 0
 	trail.LightEmission = 0.5
 	trail.Transparency = NumberSequence.new(0.4)
@@ -84,7 +80,10 @@ function GM4:Trigger(player: Player)
 		if elapsed >= attackData.atkdur or char:HasTag("HitFinished") or char:HasTag("Parried") then
 			loop:Disconnect()
 			
+			sfx:Destroy()
+			
 			char:RemoveTag("SolDisabled")
+			char:RemoveTag("TechsDisabled")
 			
 			char:RemoveTag("Running")
 			char:RemoveTag("Resistance")

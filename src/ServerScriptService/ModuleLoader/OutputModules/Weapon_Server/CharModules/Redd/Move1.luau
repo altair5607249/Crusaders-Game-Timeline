@@ -28,10 +28,10 @@ function RM1:Trigger(player: Player)
 	
 	local attackData = {
 		atkdur = duration,
-		atkrad = 4,
+		atkrad = 6.5,
 		atktype = "light",
-		dmg = 15,
-		ID = 4,
+		dmg = 25,
+		ID = 1,
 		style = "Weapon"
 	}
 	

@@ -54,7 +54,8 @@ function YM2:Trigger(player: Player)
 		local attackData = {
 			atkdur = duration,
 			atkrad = 5,
-			atktype = "medium",
+			atktype = "light",
+			customSound = script.Sound,
 			dmg = 30,
 			getTargets = true,
 			ID = 2,
@@ -64,14 +65,6 @@ function YM2:Trigger(player: Player)
 		local targets: {Humanoid} = damager:Damage(player, attackData)
 		
 		if not targets then return end
-		
-		--copy and pastable move sfx code
-		local sfx = script.Sound:Clone()
-		sfx.Parent = root
-		sfx:Play()
-		sfx.Ended:Connect(function()
-			sfx:Destroy()
-		end)
 		
 		for i, targetHum in ipairs(targets) do
 			local targetRoot = targetHum.Parent:FindFirstChild("HumanoidRootPart")

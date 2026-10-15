@@ -27,17 +27,37 @@ which I actively monitor. Enjoy! ~ForeverHD June 2025
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local PG = player:WaitForChild("PlayerGui")
-local gui = PG:WaitForChild("SelectionGui")
+
+local selectionGui: ScreenGui, settingsGui: ScreenGui, creditsGui: ScreenGui
+
+local function onCharacterAdded()
+	selectionGui = PG:WaitForChild("SelectionGui")
+	settingsGui = PG:WaitForChild("Settings")
+	creditsGui = PG:WaitForChild("Credits")
+end
+
+if player.Character then onCharacterAdded(player.Character) end
+player.CharacterAdded:Connect(onCharacterAdded)
 
 local container  = script.Parent
 local Icon = require(container.Icon)
 
 local function openSwitch()
 	if player:HasTag("StartingScreenActive") then return end
-	gui.Enabled = true
+	selectionGui.Enabled = true
 end
 
-local icon = Icon.new()
+local function openSettings()
+	if player:HasTag("StartingScreenActive") then return end
+	settingsGui.Enabled = true
+end
+
+local function openCredits()
+	if player:HasTag("StartingScreenActive") then return end
+	creditsGui.Enabled = true
+end
+
+local menu = Icon.new()
 	:setName("Menu")
 	:setLabel("Menu")
 	:modifyTheme({"Dropdown", "MaxIcons", 3})
@@ -47,5 +67,15 @@ local icon = Icon.new()
 			:setName("Crusaders")
 			:setLabel("Crusaders")
 			:bindEvent("selected", openSwitch)
+			:oneClick(),
+		Icon.new()
+			:setName("Settings")
+			:setLabel("Settings")
+			:bindEvent("selected", openSettings)
+			:oneClick(),
+		Icon.new()
+			:setName("Credits")
+			:setLabel("Credits")
+			:bindEvent("selected", openCredits)
 			:oneClick()
 	})

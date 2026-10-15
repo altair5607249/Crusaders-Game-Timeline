@@ -100,6 +100,8 @@ function YM4:Trigger(player: Player)
 			atktype = "light",
 			dmg = dmg,
 			ID = 4,
+			noKB = true,
+			noSound = true,
 			origin = root,
 			style = "Bare"
 		}

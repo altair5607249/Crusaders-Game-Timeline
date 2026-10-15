@@ -32,10 +32,10 @@ function RM2:Trigger(player: Player)
 	local deltaHealth = maxHealth - currentHealth
 	
 	local attackData = { --for the shockwave
-		atkdur = duration * 0.1875,
+		atkdur = duration * 0.3, --0.375s
 		atkrad = 30,
 		atktype = "light",
-		dmg = healthCurve(deltaHealth, maxHealth, 15),
+		dmg = healthCurve(deltaHealth, maxHealth, 20),
 		ID = 2,
 		noKB = true,
 		origin = root,
@@ -45,7 +45,7 @@ function RM2:Trigger(player: Player)
 	damager:Damage(player, attackData)
 	
 	local attackData2 = { --for the slash itself
-		atkdur = duration * 0.0625,
+		atkdur = duration * 0.1, --0.125s
 		atkrad = 8,
 		atktype = "heavy",
 		dmg = healthCurve(deltaHealth, maxHealth, 50),
@@ -88,7 +88,7 @@ function RM2:Trigger(player: Player)
 		end
 	end
 	
-	task.delay(duration * 0.0625, function()
+	task.delay(duration * 0.1, function()
 		damager:Damage(player, attackData2)
 	end)
 end

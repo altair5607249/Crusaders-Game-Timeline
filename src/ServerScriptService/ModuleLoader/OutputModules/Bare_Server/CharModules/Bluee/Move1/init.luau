@@ -19,7 +19,7 @@ function BM1:Trigger(player: Player)
 	local char = player.Character or player.CharacterAdded:Wait()
 	local root: Part = char:WaitForChild("HumanoidRootPart")
 	
-	local dmg = 75
+	local dmg = 60
 	
 	local characterList = CS:GetTagged("Character")
 	local filtered = {}
@@ -33,7 +33,7 @@ function BM1:Trigger(player: Player)
 	params.FilterType = Enum.RaycastFilterType.Include
 	params.FilterDescendantsInstances = filtered
 	
-	local size = Vector3.new(0.5, 64, 1)
+	local size = Vector3.new(0.75, 64, 1)
 	local magnitude = 256
 	local finalVector = magnitude * root.CFrame.LookVector
 	local result = workspace:Blockcast(root.CFrame, size, finalVector, params)
@@ -85,7 +85,7 @@ function BM1:Trigger(player: Player)
 		atkdur = duration,
 		atkrad = 2.5,
 		atktype = "heavy",
-		bdmg = dmg,
+		bypassParry = true,
 		dmg = dmg,
 		ID = 1,
 		oneHit = true,

@@ -27,17 +27,19 @@ function RM3:Trigger(player: Player)
 	local health = maxHealth - currentHealth
 	
 	local attackData = {
-		atkdur = duration + health^2/(85.7142*maxHealth),
+		atkdur = duration,
 		atkrad = 10,
 		atktype = "light",
 		bdmg = dmg,
-		dmg = dmg + health^2/(80*maxHealth),
+		dmg = dmg + health^2/(60*maxHealth),
 		DOT = 0.35,
 		expanding = 1.48599,
 		ID = 3,
 		origin = char:FindFirstChild("HumanoidRootPart"),
 		style = "Bare"
 	}
+	
+	print(attackData.dmg)
 	
 	local handle = Instance.new("Part")
 	handle.Position = Vector3.new(root.Position.X, root.Position.Y - 3, root.Position.Z)

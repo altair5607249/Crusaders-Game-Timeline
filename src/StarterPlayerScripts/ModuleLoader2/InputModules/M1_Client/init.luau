@@ -1,6 +1,8 @@
-local player = game:GetService("Players").LocalPlayer
+local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local SSS = game:GetService("ServerScriptService")
+
+local player = Players.LocalPlayer
 
 local IAS = require(player.PlayerScripts.Energy)
 local spacing = require(RS.UniversalModules.Space)
@@ -10,13 +12,16 @@ local animHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.Animatio
 
 local attack = RS.Remotes.Attack
 
-local crusader, options, prevInput, count, comboExtension, db, char, hum, animator, animTracks
+local crusader: string?, options: {Instance}?, prevInput, count, comboExtension: number?, db, char, hum, animator, animTracks
 local animations = script.Animations
 
 local function onCharacterChanged()
 	crusader = player:GetAttribute("Crusader")
+	
 	options = {1, 2, 3}
-	prevInput, count, comboExtension, db = 0, 0, 1, false
+	prevInput, count, db = 0, 0, false
+	comboExtension = timing.GetValue(crusader, "M1", 3, 1) + 0.5
+	
 	char = player.Character or player.CharacterAdded:Wait()
 	hum = char:WaitForChild("Humanoid")
 	root = char:WaitForChild("HumanoidRootPart")
@@ -25,15 +30,10 @@ local function onCharacterChanged()
 	animTracks = animHandler:LoadAnimations(animator, animations, crusader, "M1")
 end
 
+if player.Character then onCharacterChanged() end --covers the case where the player's character already exists before this script runs
 player.CharacterAdded:Connect(function()
-	onCharacterChanged()
+	onCharacterChanged() --callback in case of respawn and/or character swap
 end)
-
---[[player.CharacterAdded:Connect(function()
-	table.clear(animTracks)
-	repeat task.wait() until crusader ~= nil
-	onCharacterChanged()
-end)]]
 
 local m1 = {}
 
@@ -41,6 +41,9 @@ function m1.Click()
 	if not db then
 		if hum == nil or hum.Health <= 0 then return end
 		if char:GetAttribute("Stunned") then return end
+		if char:HasTag("ActiveInput") then return end
+		
+		char:AddTag("ActiveInput")
 
 		db = true
 
@@ -68,9 +71,15 @@ function m1:Attack(index: number)
 	attack:FireServer("M1_Server", index)
 
 	local currentChar = char
-	local cooldown = timing.GetValue(crusader, "M1", 2, index)
+	local cooldown: number = timing.GetValue(crusader, "M1", 2, index)
+	local duration: number = timing.GetValue(crusader, "M1", 3, index)
+	
 	task.delay(cooldown, function()
-		if currentChar == char then db = false end
+		if currentChar == char then db = false  end
+	end)
+	
+	task.delay(duration, function()
+		char:RemoveTag("ActiveInput")
 	end)
 end
 

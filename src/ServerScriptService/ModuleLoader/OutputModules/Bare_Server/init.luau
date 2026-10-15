@@ -1,3 +1,4 @@
+local CS = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local SSS = game:GetService("ServerScriptService")
@@ -59,15 +60,28 @@ function bareManager.Action(player: Player, move: number, copiedCrusader: string
 	local earlyEnd = timing.GetValue(crusader, "Bare", 5, move) --no recovery frames/anim commitment
 	
 	char:AddTag("LoadingAttack")
-	task.delay(delayTime, function()
-		char:RemoveTag("LoadingAttack")
-		if char:HasTag("CancellingAttack") then
-			char:RemoveTag("CancellingAttack")
-			return
+	
+	local cancelMove = false
+	local listener
+	
+	listener = CS:GetInstanceAddedSignal("CancellingAttack"):Connect(function(instance)
+		if instance == char then
+			cancelMove = true
+			if listener then listener:Disconnect() end
 		end
-		if earlyEnd ~= nil then stunManager.Eval(player, nil, duration, "Recovery") end --recovery frames/anim commitment
-		characters[crusader][move]:Trigger(player)
 	end)
+	
+	task.wait(delayTime)
+	
+	if listener then listener:Disconnect() end
+	
+	char:RemoveTag("LoadingAttack")
+	
+	if cancelMove or not char then return end
+	
+	if earlyEnd ~= nil then stunManager.Eval(player, nil, duration, "Recovery") end --recovery frames/anim commitment
+	
+	characters[crusader][move]:Trigger(player)
 end
 
 return bareManager

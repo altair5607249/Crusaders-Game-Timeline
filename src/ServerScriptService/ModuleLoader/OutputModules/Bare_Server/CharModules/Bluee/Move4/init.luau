@@ -90,7 +90,7 @@ function BM4:Trigger(player: Player)
 		atkdur = duration*0.25,
 		atkrad = 25,
 		atktype = "medium",
-		bdmg = dmg,
+		bypassParry = true,
 		dmg = dmg,
 		getTargets = true,
 		ID = 4,

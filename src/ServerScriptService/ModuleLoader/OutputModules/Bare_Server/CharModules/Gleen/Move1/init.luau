@@ -57,7 +57,7 @@ function GM1:Trigger(player: Player)
 		return directionA < directionB
 	end)
 
-	if not targetRoots[1] then --necessary tagging for continuation-based moves
+	if not targetRoots[1] or char:HasTag("Parried") then --necessary tagging for continuation-based moves
 		print("Discontinue")
 		char:AddTag("Discontinue") 
 		task.delay(0.1, function()

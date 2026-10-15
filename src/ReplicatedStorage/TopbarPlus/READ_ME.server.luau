@@ -29,14 +29,11 @@ local player = Players.LocalPlayer
 local PG = player:WaitForChild("PlayerGui")
 local gui = PG:WaitForChild("SelectionGui")
 
-player.CharacterAdded:Connect(function(char) --for when the player dies/resets
-	gui.Enabled = false
-end)
-
 local container  = script.Parent
 local Icon = require(container.Icon)
 
 local function openSwitch()
+	if player:HasTag("StartingScreenActive") then return end
 	gui.Enabled = true
 end
 

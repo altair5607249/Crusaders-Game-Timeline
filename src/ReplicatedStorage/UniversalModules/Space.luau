@@ -1,7 +1,7 @@
 --for PHYSICS :)
 
 local configTable = {
-	--1 = bspd, 2 = sspd, 3 = dmg query's basis
+	--1 = bspd, 2 = sspd/tolerance divisor, 3 = dmg query's basis
 	Redd = {16, 24, 5},
 	Yello = {15, 25, 4},
 	Gleen = {18, 22, 6},

@@ -15,6 +15,7 @@ Players.PlayerAdded:Connect(function(player)
 	end)
 	
 	player.CharacterRemoving:Connect(function(char)
+		if player.Parent ~= Players then return end --this signal is faster than CharacterRemoving
 		cdRegistry[player][char] = nil
 	end)
 end)
@@ -35,7 +36,7 @@ function cooldown:Register(player: Player, move: string, style: string, ID: numb
 	local crusader = player:GetAttribute("Crusader")
 	local moveCooldown = timing.GetValue(crusader, style, 2, ID)
 	
-	loadGUI:FireClient(player, move, moveCooldown)
+	loadGUI:FireClient(player, move, ID, moveCooldown)
 end
 
 function cooldown:IsReady(player: Player, move: string, style: string)
@@ -52,6 +53,16 @@ function cooldown:IsReady(player: Player, move: string, style: string)
 	local constraint = timing.GetValue(crusader, style, 2, ID) --cooldown used as the constraint
 	
 	return not timing.CheckConstraint(prevInput, constraint)
+end
+
+function cooldown:Manipulate(player: Player, move: string, magnitude: number) --WIP
+	local char = player.Character or player.CharacterAdded:Wait()
+	local charEntries = cdRegistry[player] and cdRegistry[player][char]
+	local entry = charEntries and charEntries[move]
+
+	if entry == nil then return true end
+
+	entry[1] += magnitude --can technically reduce wait time, add wait time, or eliminate it entirely
 end
 
 return cooldown

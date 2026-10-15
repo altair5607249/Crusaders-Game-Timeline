@@ -16,8 +16,8 @@ remotes.Attack.OnServerEvent:Connect(function(player, atkRoute: string, modifier
 	atkRoutes[atkRoute].Action(player, modifier)
 end)
 
-remotes.CharacterChange.OnServerEvent:Connect(function(player, crusader: string)
-	CMS.Life(player, crusader)
+remotes.CharacterChange.OnServerEvent:Connect(function(player, crusader: string, skin: string)
+	CMS.Life(player, crusader, skin)
 end)
 
 --[[ reserved for the rpg :)

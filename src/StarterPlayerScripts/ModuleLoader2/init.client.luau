@@ -33,9 +33,12 @@ for i, module in ipairs(modules:GetChildren()) do
 	table.insert(inputMods, module)
 end
 
-task.delay(1.5, function()
-	IAS:Init(inputMods) --initial spawn
-end)
+repeat task.wait() until player:HasTag("StartingScreenActive")
+repeat task.wait() until not player:HasTag("StartingScreenActive")
+
+print(inputMods)
+
+IAS:Init(inputMods) --initial spawn
 
 --fix architecture later
 remotes.ToggleStun.OnClientEvent:Connect(function(atktype: string, switch: boolean)

@@ -26,8 +26,11 @@ end)
 local m1Manager = {}
 
 function m1Manager.Action(player: Player, index: number)
+	local crusader = player:GetAttribute("Crusader")
+	
 	local char = player.Character or player.CharacterAdded:Wait()
-	local comboExtension, cheating = 1, false
+	local cheating = false
+	local comboExtension = timing.GetValue(crusader, "M1", 3, 1) + 0.5
 	
 	if index > 4 then return end --just incase a modified client tries to pass their strike index as 4 when it isnt actually 4
 	if not cooldown:IsReady(player, "M1", "M1") or char:GetAttribute("Stunned") then return end
@@ -47,8 +50,14 @@ function m1Manager.Action(player: Player, index: number)
 	m1Registry[player].prevTick = os.clock()
 	cooldown:Register(player, "M1", "M1", index)
 	
-	local crusader = player:GetAttribute("Crusader")
 	local root: Part = char:FindFirstChild("HumanoidRootPart")
+	
+	local sfx = script.MissSound:Clone() --could be a miss sound, but it's mostly sfx for charging the punch
+	sfx.Parent = root
+	sfx:Play()
+	sfx.Ended:Connect(function()
+		sfx:Destroy()
+	end)
 		
 	local delayTime = timing.GetValue(crusader, "M1", 1, index)
 	local duration = timing.GetValue(crusader, "M1", 3, index) - delayTime
@@ -69,19 +78,13 @@ function m1Manager.Action(player: Player, index: number)
 		style = "M1"
 	}
 	
-	local sfx = script.MissSound:Clone() --could be a miss sound, but it's mostly sfx for charging the punch
-	sfx.Parent = root
-	sfx:Play()
-	sfx.Ended:Connect(function()
-		sfx:Destroy()
-	end)
-	
 	task.delay(delayTime, function()
 		if char:GetAttribute("Stunned") then return end
 		
 		task.spawn(function()
-			local targets = damager:Damage(player, attackData)
-			if targets then
+			local targets: {Instance} = damager:Damage(player, attackData)
+			
+			if targets and targets[1] and not char:HasTag("Parried") then
 				if attackData.atktype == "light" then
 					local sfx = script.Sound:Clone()
 					sfx.Parent = root

@@ -23,7 +23,7 @@ function GM2:Trigger(player: Player)
 	local hum: Humanoid = char:WaitForChild("Humanoid")
 	local root: Part = char:WaitForChild("HumanoidRootPart")
 	
-	local dmg = 10
+	local dmg = 8
 	local duration = 2*(timing.GetValue("Gleen", "Bare", 3, 2) - timing.GetValue("Gleen", "Bare", 1, 2))
 	
 	local maxHealth = hum.MaxHealth
@@ -34,7 +34,7 @@ function GM2:Trigger(player: Player)
 		atkdur = duration*0.5,
 		atkrad = 30,
 		atktype = "light",
-		bdmg = 0,
+		bypassParry = true,
 		dmg = 0,
 		getTargets = true,
 		ID = 2,
@@ -84,8 +84,9 @@ function GM2:Trigger(player: Player)
 		atkrad = 10,
 		atktype = "heavy",
 		bdmg = dmg,
+		bypassParry = true,
 		dmg = healthCurve(health, maxHealth, dmg),
-		DOT = 0.5,
+		DOT = 0.3,
 		ID = 2,
 		style = "Bare"
 	}

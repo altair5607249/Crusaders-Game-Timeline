@@ -88,7 +88,30 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 			local targetHum = targetChar:FindFirstChild("Humanoid")
 			if not targetHum or targetHum.Health <= 0 or targetHum == hum then continue end
 			
-			if targetHum:HasTag("Immortal") then continue end --for i-frames
+			if targetHum:HasTag("Immortal") or targetHum:HasTag("Blessed") then continue end --for i-frames
+			
+			if targetChar:HasTag("LoadingAttack") then 
+				targetChar:AddTag("CancellingAttack")
+				
+				task.delay(0.1, function()
+					char:RemoveTag("CancellingAttack")
+				end)
+			end
+			
+			if not attributes["bypassParry"] and targetChar:HasTag("Parrying") then
+				char:AddTag("Parried")
+				
+				task.delay(0.1, function()
+					char:RemoveTag("Parried")
+				end)
+				
+				targetChar:AddTag("SuccessfulParry")
+				targetChar:RemoveTag("Parrying")
+
+				duration = attributes["atkdur"] --cuts off the sequential damage frames
+
+				continue --and protects the parrying player
+			end
 			
 			if attributes["shockwave"] ~= nil then
 				local direction = (targetRoot.Position - oldOrigin.Position).Unit
@@ -103,7 +126,7 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 				targetHum:TakeDamage(attributes["dmg"]) --most important line obviously
 				
 				if attributes["oneHit"] and targetPlr then
-					duration = attributes["atkdur"]
+					duration = attributes["atkdur"] --cuts off the sequential damage frames
 					char:AddTag("HitFinished")
 					task.delay(0.1, function()
 						char:RemoveTag("HitFinished")

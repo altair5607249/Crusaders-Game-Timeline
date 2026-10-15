@@ -16,8 +16,8 @@ local animations = script:WaitForChild("Animations")
 local animsTable = animations:GetChildren()
 local animDispatch = {}
 
-local crusader, char, root, baseSpd, runSpd, hum: Humanoid?, animator
-local dashRegistry, frontDash
+local crusader, char, root: Part?, baseSpd, runSpd, hum: Humanoid?, animator
+local techRegistry, frontDash
 
 local sprintConnection: RBXScriptConnection? = nil --moved to module scope so it persists across Sprint() calls
 local activeDashLoop: RBXScriptConnection? = nil --prevents overlapping dash loops from fighting over velocity
@@ -31,10 +31,12 @@ local function onCharacterChanged()
 	hum = char:WaitForChild("Humanoid")
 	animator = hum:WaitForChild("Animator")
 
-	dashRegistry ={
+	techRegistry = {
 		FrontDash = 0,
-		AuxDash = 0
+		AuxDash = 0,
+		Parry = 0
 	}
+	
 	frontDash = false
 
 	for i, anim in pairs(animsTable) do
@@ -50,30 +52,66 @@ end)
 
 local movement = {}
 
-local dashSpecs = {
-	DashForward = {"FrontDash", 1},
-	DashBackward = {"AuxDash", 2},
-	DashRight = {"AuxDash", 2},
-	DashLeft = {"AuxDash", 2}
+local techSpecs = {
+	FrontDash = 1,
+	AuxDash = 2,
+	Parry = 3
 }
 
-function movement.Dash(dashDur: number, direction: Vector3, anim: Animation)
-	local name = dashSpecs[anim.Name][1]
-	local constraint = timing.GetValue(crusader, "Tech", 2, dashSpecs[anim.Name][2])
+function movement.Dash(dashDur: number, direction: Vector3)
 	local stamina: number = hum:GetAttribute("Stamina")
-
-	if timing.CheckConstraint(dashRegistry[name], constraint) or char:GetAttribute("Stunned") then return end
 	if stamina <= 0 then return end --no stamina, no dice
-
-	--actual stamina checks
-	if direction == root.CFrame.LookVector then --for front dashes
+	if char:HasTag("ActiveInput") then return end
+	
+	local anim: Animation?, name: string?
+	
+	if direction == root.CFrame.LookVector then --front dash
 		if stamina < 5 then return end
-	else --for auxiliary dashes
+		anim = script.Animations.DashForward
+		name = "FrontDash"
+	else --auxiliary dashes
 		if stamina < 2.5 then return end
+		name = "AuxDash"
+		
+		--normalizes the direction for proper application of the dot product in the next few lines
+		if direction.Magnitude <= 0.1 then 
+			direction = -root.CFrame.LookVector.Unit
+		else
+			direction = direction.Unit
+		end
+		
+		local frontProduct = direction:Dot(root.CFrame.LookVector)
+		local backProduct = direction:Dot(-root.CFrame.LookVector)
+		local rightProduct = direction:Dot(root.CFrame.RightVector)
+		local leftProduct = direction:Dot(-root.CFrame.RightVector)
+		
+		anim = script.Animations.DashBackward
+		
+		local bestProduct = backProduct --starts with the backwards dash by default
+		
+		if frontProduct > bestProduct then --allows forward dashing with the auxiliary dash for extra distance
+			anim = script.Animations.DashForward 
+			bestProduct = frontProduct
+		end
+		
+		if rightProduct > bestProduct then 
+			anim = script.Animations.DashRight 
+			bestProduct = rightProduct
+		end
+		
+		if leftProduct > bestProduct then 
+			anim = script.Animations.DashLeft 
+			bestProduct = leftProduct
+		end
 	end
+	
+	local constraint = timing.GetValue(crusader, "Tech", 2, techSpecs[name])
+	if timing.CheckConstraint(techRegistry[name], constraint) or char:GetAttribute("Stunned") then return end
+	
+	char:AddTag("ActiveInput")
 
-	RS.Remotes.MovementTrigger:FireServer("dashSpecs", anim.Name)
-	dashRegistry[name] = os.clock()
+	RS.Remotes.MovementTrigger:FireServer("dashSpecs", name)
+	techRegistry[name] = os.clock()
 
 	if direction == root.CFrame.LookVector then frontDash = true end
 
@@ -95,6 +133,7 @@ function movement.Dash(dashDur: number, direction: Vector3, anim: Animation)
 			activeDashLoop:Disconnect()
 			activeDashLoop = nil
 			if frontDash == true then frontDash = false end
+			char:RemoveTag("ActiveInput")
 		end
 	end)
 end
@@ -103,6 +142,7 @@ function movement.Sprint(sprinting: boolean)
 	RS.Remotes.MovementTrigger:FireServer("runSpecs", "Sprint", sprinting)
 
 	if sprinting and hum:GetAttribute("Stamina") > 0 then
+		print("Sprinting")
 		fovUp:Play()
 		hum.WalkSpeed = runSpd
 
@@ -121,16 +161,36 @@ function movement.Sprint(sprinting: boolean)
 	end
 end
 
-function movement.Parry() --this is gonna be fun to program!
-	print("Parry") --remember that this should reduce player's cooldowns and stun the other player if landed!
+function movement.Parry(anim: Animation) 
+	print("Parry") 
+	
+	if char:HasTag("ActiveInput") then return end
+	
+	local name = "Parry"
+	local constraint = timing.GetValue(crusader, "Tech", 2, techSpecs[name])
+	local stamina: number = hum:GetAttribute("Stamina")
+
+	if timing.CheckConstraint(techRegistry[name], constraint) or char:GetAttribute("Stunned") then return end
+	if stamina < 15 then return end
+	
+	char:AddTag("ActiveInput")
+	
+	RS.Remotes.MovementTrigger:FireServer("parrySpecs", "Parry")
+	techRegistry[name] = os.clock()
+	
+	animDispatch[anim]:Play()
+	
+	local duration: number = timing.GetValue(crusader, "Tech", 3, 3)
+	
+	task.delay(duration, function()
+		char:RemoveTag("ActiveInput")
+	end)
 end
 
 local movementSpecs = { --it's so peak... so clean..!
-	{name = "DashForward", callback = function() movement.Dash(timing.GetValue(crusader, "Tech", 3, 1), root.CFrame.LookVector, animations.DashForward) end},
-	{name = "DashBackward", callback = function() movement.Dash(timing.GetValue(crusader, "Tech", 3, 2), -root.CFrame.LookVector, animations.DashBackward) end},
-	{name = "DashRight", callback = function() movement.Dash(timing.GetValue(crusader, "Tech", 3, 2), root.CFrame.RightVector, animations.DashRight) end},
-	{name = "DashLeft", callback = function() movement.Dash(timing.GetValue(crusader, "Tech", 3, 2), -root.CFrame.RightVector, animations.DashLeft) end},
-	{name = "Parry", callback = function() movement.Parry() end},
+	{name = "FrontDash", callback = function() movement.Dash(timing.GetValue(crusader, "Tech", 3, 1), root.CFrame.LookVector) end},
+	{name = "AuxDash", callback = function() movement.Dash(timing.GetValue(crusader, "Tech", 3, 2), hum.MoveDirection) end},
+	{name = "Parry", callback = function() movement.Parry(animations.Parry) end},
 	{name = "Sprint", callback = function(sprinting: boolean) movement.Sprint(sprinting) end}
 }
 

@@ -12,7 +12,7 @@ function RM2:Trigger(player: Player)
 	local root = char:WaitForChild("HumanoidRootPart")
 	local rightArm = char:WaitForChild("Right Arm")
 	
-	local dmg = 25
+	local dmg = 40
 	local shockwaveDmg = 10
 	local delayTime = 0.2
 	
@@ -24,11 +24,13 @@ function RM2:Trigger(player: Player)
 		atkdur = 0.5,
 		atkrad = 4,
 		atktype = "heavy",
-		bdmg = dmg,
+		bypassParry = true,
 		dmg = dmg + health^2/(8*maxHealth),
 		ID = 2,
 		style = "Bare"
 	}
+	
+	print(attackData.dmg)
 	
 	--calibrate effects
 	local hitPart = char:WaitForChild("hitPart")
@@ -61,7 +63,7 @@ function RM2:Trigger(player: Player)
 		atkdur = 0.3,
 		atkrad = 40,
 		atktype = "light",
-		bdmg = shockwaveDmg,
+		bypassParry = true,
 		dmg = shockwaveDmg + health^2/(20*maxHealth),
 		ID = 2,
 		shockwave = 0.5

@@ -42,26 +42,29 @@ function stunManager.Eval(player: Player, atktype: string, duration: number, sou
 	if not previousSource or stunPriority[source] > stunPriority[previousSource] then char:SetAttribute("StunSource", source) end
 	
 	if not char:GetAttribute("StunExt") then
-		if atktype then toggle:FireClient(player, atktype, true) end
-		
+		char:SetAttribute("StunExt", true)
+
 		local initialStun = os.clock()
+
 		task.spawn(function()
-			char:SetAttribute("StunExt", true)
-			
 			repeat task.wait() until (os.clock() - initialStun >= char:GetAttribute("StunTime")) or player.Parent ~= Players or not hum
-			
+
 			if player.Parent ~= Players then return end
-			
+
 			if char:GetAttribute("StunType") then toggle:FireClient(player, char:GetAttribute("StunType"), false) end
-			
+
 			char:SetAttribute("Stunned", false)
 			char:SetAttribute("StunTime", nil)
 			char:SetAttribute("StunExt", nil)
 			char:SetAttribute("StunSource", nil)
 			char:SetAttribute("StunType", nil)
-
 			hum.WalkSpeed = spacing.GetValue(crusader, 1)
 		end)
+	end
+
+	if atktype and not char:GetAttribute("StunTypeFired") then --makes sure of legitimate pairing
+		char:SetAttribute("StunTypeFired", true)
+		toggle:FireClient(player, atktype, true)
 	end
 end
 

@@ -49,10 +49,11 @@ def download_version(version: int):
 
     return out_path
 
-for entry in versions:
-    try:
-        path = download_version(entry["version"])
-        print("saved:", path)
-    except Exception as e:
-        print("Failed on version", entry["version"], "-", e)
-    time.sleep(1)
+if __name__ == "__main__":
+    for entry in versions:
+        try:
+            path = download_version(entry["version"])
+            print("saved:", path)
+        except Exception as e:
+            print("Failed on version", entry["version"], "-", e)
+        time.sleep(1)

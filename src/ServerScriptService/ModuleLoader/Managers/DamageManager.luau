@@ -93,20 +93,27 @@ function DamageManager:Damage(player: Player, attributes: {Instance})
 			if targetChar:HasTag("LoadingAttack") then 
 				targetChar:AddTag("CancellingAttack")
 				
-				task.delay(0.1, function()
-					char:RemoveTag("CancellingAttack")
+				local connection: RBXScriptConnection
+				connection = CS:GetInstanceRemovedSignal("LoadingAttack"):Connect(function(instance)
+					if instance == targetChar then
+						targetChar:RemoveTag("CancellingAttack")
+						connection:Disconnect()
+					end
 				end)
 			end
 			
 			if not attributes["bypassParry"] and targetChar:HasTag("Parrying") then
 				char:AddTag("Parried")
 				
-				task.delay(0.1, function()
-					char:RemoveTag("Parried")
-				end)
-				
 				targetChar:AddTag("SuccessfulParry")
-				targetChar:RemoveTag("Parrying")
+				
+				local connection: RBXScriptConnection
+				connection = CS:GetInstanceRemovedSignal("Parrying"):Connect(function(instance)
+					if instance == targetChar then
+						char:RemoveTag("Parried")
+						connection:Disconnect()
+					end
+				end)
 
 				duration = attributes["atkdur"] --cuts off the sequential damage frames
 

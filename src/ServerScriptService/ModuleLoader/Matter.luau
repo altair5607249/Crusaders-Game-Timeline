@@ -87,6 +87,7 @@ local function applySkin(model: Model, skinTemplate: Model, hum: Humanoid)
 
 	for _, item in ipairs(model:GetChildren()) do
 		if item:IsA("Accessory") then
+			if item.Name == "Main" and skinTemplate.Name ~= "Default" then continue end
 			item:Destroy()
 		end
 	end

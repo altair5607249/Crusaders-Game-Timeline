@@ -32,7 +32,7 @@ function BM2:Trigger(player: Player)
 	vfx.Color = Color3.new(0, 0, 1)
 	vfx.Parent = root
 	
-	copyAnim:FireClient(player, copiedCrusader, copiedMove)
+	copyAnim:FireClient(player, copiedCrusader, copiedMove, "Bare")
 	bareManager.Action(player, copiedMove, copiedCrusader)
 	
 	task.delay(duration, function()

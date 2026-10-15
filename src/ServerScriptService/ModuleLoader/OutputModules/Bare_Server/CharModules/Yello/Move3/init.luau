@@ -44,7 +44,7 @@ function YM3:Trigger(player: Player)
 	local base = clone:FindFirstChild("Base")
 	local top = clone:FindFirstChild("Part")
 	base.Position = Vector3.new(root.Position.X, root.Position.Y - 3, root.Position.Z)
-	top.Position = Vector3.new(root.Position.X, 256, root.Position.Z)
+	top.Position = Vector3.new(root.Position.X, root.Position.Y + 256, root.Position.Z)
 	local lightning = base:FindFirstChild("Attachment"):FindFirstChild("Beam")
 	
 	clone.Parent = workspace

@@ -51,19 +51,20 @@ function stunManager.Eval(player: Player, atktype: string, duration: number, sou
 
 			if player.Parent ~= Players then return end
 
-			if char:GetAttribute("StunType") then toggle:FireClient(player, char:GetAttribute("StunType"), false) end
+			toggle:FireClient(player, char:GetAttribute("StunType"), false)
 
 			char:SetAttribute("Stunned", false)
 			char:SetAttribute("StunTime", nil)
 			char:SetAttribute("StunExt", nil)
 			char:SetAttribute("StunSource", nil)
 			char:SetAttribute("StunType", nil)
+			char:SetAttribute("StunStart", nil)
 			hum.WalkSpeed = spacing.GetValue(crusader, 1)
 		end)
 	end
 
-	if atktype and not char:GetAttribute("StunTypeFired") then --makes sure of legitimate pairing
-		char:SetAttribute("StunTypeFired", true)
+	if not char:GetAttribute("StunStart") then --makes sure of legitimate pairing
+		char:SetAttribute("StunStart", true)
 		toggle:FireClient(player, atktype, true)
 	end
 end

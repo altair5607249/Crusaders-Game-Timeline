@@ -8,7 +8,7 @@ local registry = require(script.Parent.Permissions)
 local receiver = RS.Remotes.Admin
 
 local function findPlayer(playerName: string)
-	for i, player: Player in ipairs(Players:GetChildren()) do
+	for i, player: Player in ipairs(Players:GetPlayers()) do
 		if player.Name == playerName then return true, player end
 	end
 end
@@ -22,23 +22,26 @@ local function findModel(modelName: string)
 end
 
 receiver.OnServerEvent:Connect(function(admin, protocol: string, subject: string)
-	local result: boolean, title1: string, title2: string = registry:GetPerms(admin)
+	local result: boolean, title: number, clearance: number = registry:GetPerms(admin, false)
 	local command = adminCmds[protocol]
 	
 	if not result then warn(admin.Name, "is attempting to access restricted protocols!") return end
 	if not command then warn("Protocol:", protocol, "does not exist.") return end
 	
-	command(subject, admin, title1) --elite syntax right here; luau's vm stack approach ignores extra/unnecessary argumetns
+	command(subject, admin, clearance) --elite syntax right here; luau's vm stack approach ignores extra/unnecessary argumetns
 end)
 
-function adminCmds.Collapse(playerName: string, admin: Player, title1: string)
+function adminCmds.Collapse(playerName: string, admin: Player, clearance: number)
 	print("Protocol: Collapse")
 	
-	if title1 ~= "Principalities" or title1 ~= "Regulators" then return end
+	if clearance < 8 then return end --only Regulators can manipulate something so sacred as death
 	
 	local result: boolean, player: Player = findPlayer(playerName)
 	
 	if not result then warn(playerName, "not found") return end
+	
+	local _, _, targetClearance: number = registry:GetPerms(player, false)
+	if targetClearance > clearance then return end --cannot insta-kill players with more authority than you
 	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum: Humanoid = char:WaitForChild("Humanoid")
@@ -46,8 +49,10 @@ function adminCmds.Collapse(playerName: string, admin: Player, title1: string)
 	hum.Health = 0
 end
 
-function adminCmds.Preserve(playerName: string, admin: Player, title1: string)
+function adminCmds.Preserve(playerName: string, admin: Player, clearance: number)
 	print("Protocol: Preserve")
+	
+	if clearance < 8 then return end --only Regulators can manipulate something so sacred as life
 	
 	local result: boolean, player: Player = findPlayer(playerName)
 
@@ -59,14 +64,18 @@ function adminCmds.Preserve(playerName: string, admin: Player, title1: string)
 	hum:AddTag("Blessed") --id rather not clash with the Immortal tag's dynamism with certain attacks that manipulate i-frames
 end
 
-function adminCmds.Transfer(mapName: string)
+function adminCmds.Transfer(mapName: string, admin: Player, clearance: number)
 	print("Protocol: Transfer")
+	
+	if clearance < 6 then return end --Regalia and above can forcibly change the map selection
 	
 	mapManager.SetMap(mapName)
 end
 
-function adminCmds.Teleport(modelName: string, admin: Player)
+function adminCmds.Teleport(modelName: string, admin: Player, clearance: number)
 	print("Protocol: Teleport")
+	
+	if clearance < 4 then return end
 	
 	local result: boolean, model: Model = findModel(modelName)
 	

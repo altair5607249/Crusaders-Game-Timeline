@@ -3,8 +3,8 @@
   "properties": {
     "PlaybackSpeed": 1.6699999570846558,
     "RollOffMaxDistance": 150.0,
-    "RollOffMinDistance": 20.0,
     "AudioContent": "rbxassetid://101541820780066",
-    "RollOffMode": "InverseTapered"
+    "RollOffMode": "InverseTapered",
+    "RollOffMinDistance": 20.0
   }
 }

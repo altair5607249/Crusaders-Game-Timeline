@@ -14,6 +14,7 @@ local function preloadAllVFX()
 end
 
 preloadAllVFX() --loads vfx before player is declared to be ready
+
 remotes.ClientReadiness:FireServer(true)
 
 local IAS = require(player.PlayerScripts.Energy)
@@ -29,7 +30,6 @@ local inputMods = {}
 
 for i, module in ipairs(modules:GetChildren()) do
 	local class = require(module)
-	if module == modules.Weapon_Client then continue end
 	table.insert(inputMods, module)
 end
 

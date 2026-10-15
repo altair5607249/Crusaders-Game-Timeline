@@ -138,9 +138,7 @@ function IAS:GetInputModules()
 	local inputModules = {}
 
 	for i, mod in ipairs(modules:GetChildren()) do
-		if mod ~= modules.Weapon_Client then
-			table.insert(inputModules, mod)
-		end
+		table.insert(inputModules, mod)
 	end
 
 	return inputModules

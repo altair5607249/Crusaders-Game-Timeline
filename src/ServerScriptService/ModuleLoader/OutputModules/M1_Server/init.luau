@@ -10,6 +10,25 @@ local damager = require(managers.DamageManager)
 local spacing = require(RS.UniversalModules.Space)
 local timing = require(RS.UniversalModules.Time)
 
+local weaponQuirks = {
+	Redd = {
+		dmg = 3,
+		range = 2
+	},
+	Yello = {
+		dmg = 1,
+		range = 3.5
+	},
+	Gleen = {
+		dmg = 2,
+		range = 3
+	},
+	Bluee = {
+		dmg = 3,
+		range = 2.5
+	}
+}
+
 local m1Registry = {}
 
 Players.PlayerAdded:Connect(function(player)
@@ -26,7 +45,7 @@ end)
 local m1Manager = {}
 
 function m1Manager.Action(player: Player, index: number)
-	local crusader = player:GetAttribute("Crusader")
+	local crusader: string = player:GetAttribute("Crusader")
 	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local cheating = false
@@ -71,8 +90,7 @@ function m1Manager.Action(player: Player, index: number)
 		atkdur = duration,
 		atkrad = 3.5,
 		atktype = (index == 4 and "heavy") or "light", --see stun manager for time references
-		bdmg = dmg,
-		dmg = dmg + 0.5*(index-1)^2, --dmg calculations (parabolic curve)
+		dmg = (dmg + 0.5*(index-1)^2) + weaponQuirks[crusader].dmg, --dmg calculations (parabolic curve)
 		getTargets = true,
 		ID = index,
 		style = "M1"
@@ -80,6 +98,10 @@ function m1Manager.Action(player: Player, index: number)
 	
 	task.delay(delayTime, function()
 		if char:GetAttribute("Stunned") then return end
+		
+		local normalRange: CFrame = char.hitPart.CFrame
+		
+		attackData.origin = (char:HasTag("WeaponActive") and normalRange * CFrame.new(0, 0, -weaponQuirks[crusader].range)) or nil
 		
 		task.spawn(function()
 			local targets: {Instance} = damager:Damage(player, attackData)

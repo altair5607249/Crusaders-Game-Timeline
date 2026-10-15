@@ -12,13 +12,17 @@ local animHandler = require(player.PlayerScripts.ModuleLoader2.Handlers.Animatio
 
 local attack = RS.Remotes.Attack
 
-local crusader: string?, options: {Instance}?, prevInput, count, comboExtension: number?, db, char, hum, animator, animTracks
-local animations = script.Animations
+local crusader: string?, prevInput, count, comboExtension: number?, db, char, hum, animator 
+local bareOptions: {number}?, weaponOptions: {number}?
+local bareAnimTracks: {Animation}?, weaponAnimTracks: {Animation}?
+local bareAnims, weaponAnims = script.BareAnimations, script.WeaponAnimations
 
 local function onCharacterChanged()
 	crusader = player:GetAttribute("Crusader")
 	
-	options = {1, 2, 3}
+	bareOptions = {1, 2, 3}
+	weaponOptions = {1, 2, 3}
+	
 	prevInput, count, db = 0, 0, false
 	comboExtension = timing.GetValue(crusader, "M1", 3, 1) + 0.5
 	
@@ -27,7 +31,8 @@ local function onCharacterChanged()
 	root = char:WaitForChild("HumanoidRootPart")
 	animator = hum:WaitForChild("Animator")
 
-	animTracks = animHandler:LoadAnimations(animator, animations, crusader, "M1")
+	bareAnimTracks = animHandler:LoadAnimations(animator, bareAnims, crusader, "M1_Bare")
+	weaponAnimTracks = animHandler:LoadAnimations(animator, weaponAnims, crusader, "M1_Weapon")
 end
 
 if player.Character then onCharacterChanged() end --covers the case where the player's character already exists before this script runs
@@ -57,6 +62,18 @@ end
 
 function m1:Attack(index: number)
 	--blue's randomizer stuff
+	local animTracks: {Animation}?, options: {number}?
+
+	if char:HasTag("WeaponActive") then
+		animTracks = weaponAnimTracks
+		options = weaponOptions
+		print("weaponry")
+	else
+		animTracks = bareAnimTracks
+		options = bareOptions
+		print("straight hands")
+	end
+	
 	if crusader == "Bluee" and count < 4 then
 		if #options == 0 or count == 1 then options = {1, 2, 3} end
 		local choice = math.random(1, #options)

@@ -32,7 +32,7 @@ local bareManager = {}
 function bareManager.Action(player: Player, move: number, copiedCrusader: string)
 	local char = player.Character or player.CharacterAdded:Wait()
 	
-	if char:HasTag("RagdollActive") then return end
+	if char:HasTag("RagdollActive") or char:HasTag("WeaponActive") then return end
 	
 	local crusader = player:GetAttribute("Crusader")
 	local copycat = false
@@ -61,11 +61,14 @@ function bareManager.Action(player: Player, move: number, copiedCrusader: string
 	
 	char:AddTag("LoadingAttack")
 	
+	print("Loading", moveName)
+	
 	local cancelMove = false
 	local listener
 	
 	listener = CS:GetInstanceAddedSignal("CancellingAttack"):Connect(function(instance)
 		if instance == char then
+			char:RemoveTag("LoadingAttack")
 			cancelMove = true
 			if listener then listener:Disconnect() end
 		end
@@ -75,9 +78,11 @@ function bareManager.Action(player: Player, move: number, copiedCrusader: string
 	
 	if listener then listener:Disconnect() end
 	
-	char:RemoveTag("LoadingAttack")
+	if not char then return end
 	
-	if cancelMove or not char then return end
+	if char:HasTag("LoadingAttack") then char:RemoveTag("LoadingAttack") end
+	
+	if cancelMove then return end
 	
 	if earlyEnd ~= nil then stunManager.Eval(player, nil, duration, "Recovery") end --recovery frames/anim commitment
 	

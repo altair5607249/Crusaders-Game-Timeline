@@ -253,6 +253,7 @@ local function registerMovement(player: Player, scope: string, mechanic: string,
 						if not char or player.Parent ~= Players then return end
 						
 						if char:HasTag("SuccessfulParry") then 
+							char:RemoveTag("Parrying")
 							
 							local sfx = script.Parry:Clone() --cool parry sound
 							sfx.Parent = root

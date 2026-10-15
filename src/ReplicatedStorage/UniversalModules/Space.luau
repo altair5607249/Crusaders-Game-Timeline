@@ -24,11 +24,10 @@ end
 function Space.Knockback(attackerRoot: Part, targetRoot: Part, atktype: string)
 	local modifier = kbSpecs[atktype]
 	local direction = -(attackerRoot.Position - targetRoot.Position).Unit
-	print(direction)
 	
 	local base = kbSpecs.medium
 	local velocity: Vector3 = ((direction*100) - direction*((base^modifier)/base)) * (base/modifier)
-	print(velocity)
+	
 	return velocity
 end
 

@@ -13,7 +13,7 @@ versions = [
     {"version": 100, "message": "character selection, damage, m1, and sprinting"},
     {"version": 580, "message": "knockback and dashing"},
     {"version": 675, "message": "IAS (input action system)/energy"},
-    {"version": 900, "message": "cubic hurtboxes and stun"},
+    {"version": 900, "message": "cubic hitboxes and stun"},
     {"version": 1650, "message": "cooldown, mouselock, and UniversalModules (aka space and time)"},
     {"version": 1875, "message": "CMS (character management system)/matter + removed UnmanagedManagers"},
     {"version": 2200, "message": "first bare-style moveset finished (Redd) and movement anticheat"},
